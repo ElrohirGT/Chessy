@@ -13,12 +13,10 @@ use futures_util::lock::Mutex;
 use uuid::Uuid;
 
 mod routes;
-
-struct Game {}
+mod websocket;
 
 pub struct AppState {
     users: Mutex<HashMap<Uuid, String>>,
-    games: Mutex<HashMap<Uuid, Game>>,
 }
 
 #[actix_rt::main]
@@ -28,7 +26,6 @@ async fn main() -> std::io::Result<()> {
 
     let state = web::Data::new(AppState {
         users: Mutex::new(HashMap::new()),
-        games: Mutex::new(HashMap::new()),
     });
 
     HttpServer::new(move || {
