@@ -1,14 +1,12 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod model;
+use self::model::*;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub struct Game {
+    pieces: Vec<ChessPiece>,
+    board: Board,
+    white_player: Player,
+    black_player: Player,
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    white_king: BoardPosition,
+    black_king: BoardPosition,
 }
