@@ -1,20 +1,35 @@
 #[macro_use]
 extern crate log;
 
+use std::collections::HashMap;
 use std::env;
 
 use actix_cors::Cors;
 use actix_rt;
-use actix_web::{http, middleware::Logger, App, HttpServer};
+use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use dotenv::dotenv;
 use env_logger;
+use futures_util::lock::Mutex;
+use uuid::Uuid;
 
 mod routes;
+
+struct Game {}
+
+pub struct AppState {
+    users: Mutex<HashMap<Uuid, String>>,
+    games: Mutex<HashMap<Uuid, Game>>,
+}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
+
+    let state = web::Data::new(AppState {
+        users: Mutex::new(HashMap::new()),
+        games: Mutex::new(HashMap::new()),
+    });
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -29,11 +44,13 @@ async fn main() -> std::io::Result<()> {
             ])
             .max_age(3600);
         App::new()
-            .wrap(cors)
+            .app_data(state.clone())
+            // .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
+            .configure(routes::configure_routes)
     })
-    .bind("0.0.0.0:8080")?
+    .bind("127.0.0.1:8080")?
     .run()
     .await
 }
