@@ -1,12 +1,22 @@
+use enum_iterator::Sequence;
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PieceColors {
     Black,
     White,
 }
 
-#[derive(Debug)]
+impl std::fmt::Display for PieceColors {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match &self {
+            PieceColors::Black => write!(f, "Black"),
+            PieceColors::White => write!(f, "White"),
+        }
+    }
+}
+
+#[derive(Debug, Sequence, Clone, PartialEq, Eq)]
 pub enum PieceTypes {
     Pawn,
     Rook,
@@ -16,10 +26,16 @@ pub enum PieceTypes {
     King,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoardPosition {
-    row: ChessRank,
-    column: ChessFile,
+    pub row: ChessRank,
+    pub column: ChessFile,
+}
+
+impl std::fmt::Display for BoardPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}{}", self.column, self.row)
+    }
 }
 
 #[derive(Debug, Error)]
@@ -38,15 +54,15 @@ impl TryFrom<&str> for BoardPosition {
     type Error = BoardPositionInstancingErrors;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.chars().count() == 2 {
-            let column = ChessFile::try_from(value.chars().nth(0).unwrap())
-                .map_err(|inner| BoardPositionInstancingErrors::InvalidColumnFormat(inner))?;
+            let column = ChessFile::try_from(value.chars().next().unwrap())
+                .map_err(BoardPositionInstancingErrors::InvalidColumnFormat)?;
             let row: usize = value.get(1..=1).unwrap().parse().map_err(|_| {
                 BoardPositionInstancingErrors::RankMustBeANumber(
                     value.get(1..=1).unwrap().to_string(),
                 )
             })?;
             let row = ChessRank::try_from(row)
-                .map_err(|inner| BoardPositionInstancingErrors::InvalidRowFormat(inner))?;
+                .map_err(BoardPositionInstancingErrors::InvalidRowFormat)?;
             Ok(BoardPosition { column, row })
         } else {
             Err(BoardPositionInstancingErrors::ValueTooLarge(
@@ -56,11 +72,11 @@ impl TryFrom<&str> for BoardPosition {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChessPiece {
     kind: PieceTypes,
     position: BoardPosition,
-    owner: PieceColors,
+    pub owner: PieceColors,
 }
 
 impl ChessPiece {
@@ -92,26 +108,65 @@ impl Player {
 
 #[derive(Debug)]
 pub struct Board {
-    cells: Vec<Vec<ChessCell>>,
+    pub color_in_check: Option<PieceColors>,
+    pub cells: Vec<Vec<ChessCell>>,
 }
 
 impl Board {
-    pub fn new(cells: Vec<Vec<ChessCell>>) -> Board {
-        Board { cells }
+    pub fn new(cells: Vec<Vec<ChessCell>>, color_in_check: Option<PieceColors>) -> Board {
+        Board {
+            cells,
+            color_in_check,
+        }
+    }
+
+    pub fn color_in_check(&self, owner: &PieceColors) -> bool {
+        if let Some(color) = &self.color_in_check {
+            color == owner
+        } else {
+            false
+        }
     }
 }
 
 #[derive(Debug)]
-pub enum ChessCell {
-    Empty,
-    WhitePiece,
-    BlackPiece,
+pub struct ChessCell(pub Option<ChessPiece>);
+impl ChessCell {
+    pub fn some(piece: ChessPiece) -> ChessCell {
+        ChessCell(Some(piece))
+    }
+    pub fn none() -> ChessCell {
+        ChessCell(None)
+    }
+    pub fn is_occupied(&self) -> bool {
+        self.0.is_some()
+    }
+    pub fn piece_has_color(&self, color: &PieceColors) -> bool {
+        if let Some(piece) = &self.0 {
+            &piece.owner == color
+        } else {
+            false
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_none()
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChessRank(usize);
-#[derive(Debug)]
+impl std::fmt::Display for ChessRank {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+#[derive(Debug, Clone)]
 pub struct ChessFile(char);
+impl std::fmt::Display for ChessFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 pub trait ArrayIndex {
     fn to_index(&self) -> usize;
