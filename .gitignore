@@ -1,0 +1,2 @@
+# Ignoring terminal settings for VS integrated terminal
+.vscode/settings.json
