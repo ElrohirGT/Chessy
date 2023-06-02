@@ -16,6 +16,15 @@ impl std::fmt::Display for PieceColors {
     }
 }
 
+impl PieceColors {
+    pub fn opponent(&self) -> PieceColors {
+        match &self {
+            PieceColors::Black => PieceColors::White,
+            PieceColors::White => PieceColors::Black,
+        }
+    }
+}
+
 #[derive(Debug, Sequence, Clone, PartialEq, Eq)]
 pub enum PieceTypes {
     Pawn,
@@ -39,7 +48,7 @@ impl std::fmt::Display for BoardPosition {
 }
 
 #[derive(Debug, Error)]
-pub enum BoardPositionInstancingErrors {
+pub enum BoardPositionFromStrErrors {
     #[error("The format of the file (column) is invalid.")]
     InvalidColumnFormat(FileInstancingErrors),
     #[error("The format of the rank (row) is invalid.")]
@@ -51,23 +60,52 @@ pub enum BoardPositionInstancingErrors {
 }
 
 impl TryFrom<&str> for BoardPosition {
-    type Error = BoardPositionInstancingErrors;
+    type Error = BoardPositionFromStrErrors;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.chars().count() == 2 {
             let column = ChessFile::try_from(value.chars().next().unwrap())
-                .map_err(BoardPositionInstancingErrors::InvalidColumnFormat)?;
+                .map_err(BoardPositionFromStrErrors::InvalidColumnFormat)?;
             let row: usize = value.get(1..=1).unwrap().parse().map_err(|_| {
-                BoardPositionInstancingErrors::RankMustBeANumber(
-                    value.get(1..=1).unwrap().to_string(),
-                )
+                BoardPositionFromStrErrors::RankMustBeANumber(value.get(1..=1).unwrap().to_string())
             })?;
-            let row = ChessRank::try_from(row)
-                .map_err(BoardPositionInstancingErrors::InvalidRowFormat)?;
+            let row =
+                ChessRank::try_from(row).map_err(BoardPositionFromStrErrors::InvalidRowFormat)?;
             Ok(BoardPosition { column, row })
         } else {
-            Err(BoardPositionInstancingErrors::ValueTooLarge(
-                value.to_string(),
-            ))
+            Err(BoardPositionFromStrErrors::ValueTooLarge(value.to_string()))
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum BoardPositionFromIsizeErrors {
+    #[error("The file (column) passed in is negative.")]
+    NegativeFile,
+    #[error("The rank (row) passed in is negative.")]
+    NegativeRank,
+    #[error("The rank (row) passed in is greater than 7.")]
+    RankTooHigh,
+    #[error("The file (column) passed in is greater than 7.")]
+    FileTooHigh,
+}
+
+impl TryFrom<(isize, isize)> for BoardPosition {
+    type Error = BoardPositionFromIsizeErrors;
+    fn try_from((row, column): (isize, isize)) -> Result<Self, Self::Error> {
+        if row < 0 {
+            Err(BoardPositionFromIsizeErrors::NegativeRank)
+        } else if column < 0 {
+            Err(BoardPositionFromIsizeErrors::NegativeFile)
+        } else {
+            let row = row as usize;
+            let column = column as usize;
+
+            let row = ChessRank::from_index(row)
+                .map_err(|_| BoardPositionFromIsizeErrors::RankTooHigh)?;
+            let column = ChessFile::from_index(column)
+                .map_err(|_| BoardPositionFromIsizeErrors::FileTooHigh)?;
+
+            Ok(BoardPosition { row, column })
         }
     }
 }
@@ -76,7 +114,7 @@ impl TryFrom<&str> for BoardPosition {
 pub struct ChessPiece {
     kind: PieceTypes,
     position: BoardPosition,
-    pub owner: PieceColors,
+    owner: PieceColors,
 }
 
 impl ChessPiece {
@@ -86,6 +124,21 @@ impl ChessPiece {
             position,
             owner,
         }
+    }
+
+    pub fn kind(&self) -> &PieceTypes {
+        &self.kind
+    }
+
+    pub fn color(&self) -> &PieceColors {
+        &self.owner
+    }
+
+    pub fn position(&self) -> (&usize, &usize) {
+        (
+            &self.position.row.to_index(),
+            &self.position.column.to_index(),
+        )
     }
 }
 
@@ -151,13 +204,17 @@ impl ChessCell {
     pub fn is_empty(&self) -> bool {
         self.0.is_none()
     }
+
+    pub fn position(&self) -> &Option<(&usize, &usize)> {
+        &self.0.map(|piece| piece.position())
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ChessRank(usize);
 impl std::fmt::Display for ChessRank {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0 + 1)
     }
 }
 #[derive(Debug, Clone)]
@@ -168,8 +225,14 @@ impl std::fmt::Display for ChessFile {
     }
 }
 
-pub trait ArrayIndex {
+#[derive(Debug, Error)]
+pub enum FromArrayIndexError {
+    #[error("The array index must be equal or less than {0}")]
+    IndexTooBig(usize),
+}
+pub trait ArrayIndex: Sized {
     fn to_index(&self) -> usize;
+    fn from_index(value: usize) -> Result<Self, FromArrayIndexError>;
 }
 
 #[derive(Debug, Error)]
@@ -197,12 +260,21 @@ impl ArrayIndex for ChessFile {
             .expect("Couldn't convert character to base 10.") as usize;
         digit - 97
     }
+
+    fn from_index(value: usize) -> Result<Self, FromArrayIndexError> {
+        match value {
+            0..=7 => Ok(ChessFile(
+                char::from_digit((97 + value) as u32, 10).unwrap(),
+            )),
+            8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
+        }
+    }
 }
 
 #[derive(Debug, Error)]
 pub enum RankInstancingErrors {
-    #[error("The row must be a number between 1 and 8!")]
-    InvalidRowChar,
+    #[error("The rank (row) must be a number between 1 and 8!")]
+    InvalidRowNumber,
 }
 
 impl TryFrom<usize> for ChessRank {
@@ -210,7 +282,7 @@ impl TryFrom<usize> for ChessRank {
     fn try_from(row: usize) -> Result<Self, Self::Error> {
         match row {
             1..=8 => Ok(ChessRank(row)),
-            _ => Err(RankInstancingErrors::InvalidRowChar),
+            _ => Err(RankInstancingErrors::InvalidRowNumber),
         }
     }
 }
@@ -218,5 +290,12 @@ impl TryFrom<usize> for ChessRank {
 impl ArrayIndex for ChessRank {
     fn to_index(&self) -> usize {
         self.0 - 1
+    }
+
+    fn from_index(value: usize) -> Result<Self, FromArrayIndexError> {
+        match value {
+            0..=7 => Ok(ChessRank(value)),
+            8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
+        }
     }
 }
