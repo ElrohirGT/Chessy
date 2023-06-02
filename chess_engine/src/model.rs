@@ -134,10 +134,10 @@ impl ChessPiece {
         &self.owner
     }
 
-    pub fn position(&self) -> (&usize, &usize) {
+    pub fn position(&self) -> (usize, usize) {
         (
-            &self.position.row.to_index(),
-            &self.position.column.to_index(),
+            self.position.row.to_index(),
+            self.position.column.to_index(),
         )
     }
 }
@@ -205,8 +205,8 @@ impl ChessCell {
         self.0.is_none()
     }
 
-    pub fn position(&self) -> &Option<(&usize, &usize)> {
-        &self.0.map(|piece| piece.position())
+    pub fn position(&self) -> Option<(usize, usize)> {
+        (&self).0.clone().map(|piece| piece.position())
     }
 }
 
@@ -267,6 +267,7 @@ impl ArrayIndex for ChessFile {
                 char::from_digit((97 + value) as u32, 10).unwrap(),
             )),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
+            _ => unreachable!()
         }
     }
 }
@@ -296,6 +297,7 @@ impl ArrayIndex for ChessRank {
         match value {
             0..=7 => Ok(ChessRank(value)),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
+            _ => unreachable!()
         }
     }
 }
