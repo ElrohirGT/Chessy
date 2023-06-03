@@ -10,54 +10,100 @@ pub fn create_game(config: GameConfig) -> Game {
     Game::new(config)
 }
 
-#[derive(Debug, Error)]
-pub enum PieceMovementError {
-    #[error("No chess piece was found on position {0}.")]
-    NoPieceToMove(BoardPosition),
-    #[error("The destination cell ({0}) is occupied by a foe piece.")]
-    DestinationCellOccupied(BoardPosition),
-    #[error("The king of the player ({0}) continues to be in check.")]
-    PlayerKingStillInCheck(PieceColors),
+pub fn get_valid_movements_positions(piece: &ChessPiece, board: &Board) -> Vec<BoardPosition> {
+    let pattern = get_movement_pattern(piece, board);
+    todo!()
 }
+/// Get's all the possible movements, valid or invalid that a given piece can make.
+/// The return value is a collections of paths the given piece can make. This makes easier for
+/// checking for collisions down the line.
+pub fn get_movement_pattern(piece: &ChessPiece, board: &Board) -> Vec<BoardPath> {
+    let kind = *piece.kind();
+    let (row, column) = piece.position();
+    match kind {
+        PieceTypes::Pawn => vec![BoardPath(vec![(row + 1, column).try_into().unwrap()])],
+        PieceTypes::Rook => rook_movement_pattern(row, column),
+        PieceTypes::Knight => pattern_from_vec(
+            vec![
+                (2, 1),
+                (1, 2),
+                (2, -1),
+                (1, -2),
+                (-1, -2),
+                (-2, -1),
+                (-2, 1),
+                (-1, 2),
+            ],
+            row,
+            column,
+        ),
+        PieceTypes::Bishop => bishop_movement_pattern(row, column),
+        PieceTypes::Queen => {
+            let mut r_pattern = rook_movement_pattern(row, column);
+            let mut b_pattern = bishop_movement_pattern(row, column);
 
-pub fn move_piece(
-    from: BoardPosition,
-    to: BoardPosition,
-    board: Board,
-) -> Result<Board, PieceMovementError> {
-    let movement_piece =
-        get_piece(&board, &from).ok_or(PieceMovementError::NoPieceToMove(from.clone()))?;
-    let piece_color = movement_piece.owner;
-    let destination_cell = get_cell(&board, &to);
-
-    if destination_cell.piece_has_color(&piece_color) {
-        return Err(PieceMovementError::DestinationCellOccupied(to.clone()));
+            r_pattern.append(&mut b_pattern);
+            r_pattern
+        }
+        PieceTypes::King => pattern_from_vec(
+            vec![
+                (1, -1),
+                (1, 0),
+                (1, 1),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (-1, 1),
+                (-1, 0),
+            ],
+            row,
+            column,
+        ),
     }
-
-    let board_after = inner_move_piece(from, to, &board)?;
-    if board.color_in_check(&piece_color) && board_after.color_in_check(&piece_color) {
-        return Err(PieceMovementError::PlayerKingStillInCheck(
-            piece_color.clone(),
-        ));
-    }
-
-    todo!()
 }
 
-pub fn inner_move_piece(
-    from: BoardPosition,
-    to: BoardPosition,
-    board: &Board,
-) -> Result<Board, PieceMovementError> {
-    todo!()
+fn pattern_from_vec(vec: Vec<(isize, isize)>, row: usize, column: usize) -> Vec<BoardPath> {
+    vec.into_iter()
+        .map(|(r, c): (isize, isize)| (row as isize + r, column as isize + c))
+        .filter_map(|p| p.try_into().ok())
+        .map(|p: BoardPosition| vec![p])
+        .map(BoardPath::from)
+        .collect()
 }
 
-pub fn get_cell<'a>(board: &'a Board, position: &'a BoardPosition) -> &'a ChessCell {
-    let row = position.row.to_index();
-    let column = position.column.to_index();
-    board.cells.get(row).unwrap().get(column).unwrap()
+fn rook_movement_pattern(row: usize, column: usize) -> Vec<BoardPath> {
+    (0..4)
+        .map(|i| match i {
+            1 => (1..(7 - row))
+                .filter_map(|i| (row + i, column).try_into().ok())
+                .collect(),
+            2 => (1..(7 - column))
+                .filter_map(|i| (row, column + i).try_into().ok())
+                .collect(),
+            3 => (1..row)
+                .filter_map(|i| (row - i, column).try_into().ok())
+                .collect(),
+            4 => (1..column)
+                .filter_map(|i| (row, column - i).try_into().ok())
+                .collect(),
+            _ => unreachable!(),
+        })
+        .map(|v: Vec<BoardPosition>| BoardPath(v))
+        .collect()
 }
 
-pub fn get_piece(board: &Board, position: &BoardPosition) -> Option<ChessPiece> {
-    todo!()
+fn bishop_movement_pattern(row: usize, column: usize) -> Vec<BoardPath> {
+    vec![(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        .into_iter()
+        .map(|(r, c): (isize, isize)| {
+            (0..7)
+                .filter_map(|(i)| {
+                    (row as isize + i * r, column as isize + i * c)
+                        .try_into()
+                        .ok()
+                })
+                .collect::<Vec<BoardPosition>>()
+        })
+        .map(BoardPath::from)
+        .collect()
 }

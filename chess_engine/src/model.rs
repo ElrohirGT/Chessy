@@ -25,7 +25,7 @@ impl PieceColors {
     }
 }
 
-#[derive(Debug, Sequence, Clone, PartialEq, Eq)]
+#[derive(Debug, Sequence, Clone, Copy, PartialEq, Eq)]
 pub enum PieceTypes {
     Pawn,
     Rook,
@@ -39,6 +39,14 @@ pub enum PieceTypes {
 pub struct BoardPosition {
     pub row: ChessRank,
     pub column: ChessFile,
+}
+
+#[derive(Debug)]
+pub struct BoardPath(pub(crate) Vec<BoardPosition>);
+impl From<Vec<BoardPosition>> for BoardPath {
+    fn from(value: Vec<BoardPosition>) -> Self {
+        BoardPath(value)
+    }
 }
 
 impl std::fmt::Display for BoardPosition {
@@ -100,13 +108,33 @@ impl TryFrom<(isize, isize)> for BoardPosition {
             let row = row as usize;
             let column = column as usize;
 
-            let row = ChessRank::from_index(row)
-                .map_err(|_| BoardPositionFromIsizeErrors::RankTooHigh)?;
-            let column = ChessFile::from_index(column)
-                .map_err(|_| BoardPositionFromIsizeErrors::FileTooHigh)?;
-
-            Ok(BoardPosition { row, column })
+            (row, column).try_into().map_err(|e| match e {
+                BoardPositionFromUsizeErrors::FileTooHigh => {
+                    BoardPositionFromIsizeErrors::FileTooHigh
+                }
+                BoardPositionFromUsizeErrors::RankTooHigh => {
+                    BoardPositionFromIsizeErrors::RankTooHigh
+                }
+            })
         }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum BoardPositionFromUsizeErrors {
+    #[error("The rank (row) passed in is greater than 7.")]
+    RankTooHigh,
+    #[error("The file (column) passed in is greater than 7.")]
+    FileTooHigh,
+}
+impl TryFrom<(usize, usize)> for BoardPosition {
+    type Error = BoardPositionFromUsizeErrors;
+    fn try_from((row, column): (usize, usize)) -> Result<Self, Self::Error> {
+        let row =
+            ChessRank::from_index(row).map_err(|_| BoardPositionFromUsizeErrors::RankTooHigh)?;
+        let column =
+            ChessFile::from_index(column).map_err(|_| BoardPositionFromUsizeErrors::FileTooHigh)?;
+        Ok(BoardPosition { row, column })
     }
 }
 
@@ -267,7 +295,7 @@ impl ArrayIndex for ChessFile {
                 char::from_digit((97 + value) as u32, 10).unwrap(),
             )),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -297,7 +325,7 @@ impl ArrayIndex for ChessRank {
         match value {
             0..=7 => Ok(ChessRank(value)),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
