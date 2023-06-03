@@ -1,4 +1,4 @@
-use crate::model::*;
+use super::model::*;
 pub struct Game {
     pieces: Vec<ChessPiece>,
     board: Board,
