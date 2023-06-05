@@ -1,15 +1,16 @@
 use super::*;
 
 #[derive(Debug)]
-pub struct BoardPath(pub(crate) Vec<BoardPosition>);
-impl From<Vec<BoardPosition>> for BoardPath {
-    fn from(value: Vec<BoardPosition>) -> Self {
-        BoardPath(value)
+pub struct BoardPath(pub Vec<BoardPosition>);
+
+impl BoardPath {
+    pub(crate) fn new(positions: Vec<BoardPosition>) -> Self {
+        BoardPath(positions)
     }
 }
 
-impl From<BoardPath> for Vec<BoardPosition> {
-    fn from(value: BoardPath) -> Self {
-        value.0
+impl From<Vec<BoardPosition>> for BoardPath {
+    fn from(value: Vec<BoardPosition>) -> Self {
+        BoardPath(value)
     }
 }
