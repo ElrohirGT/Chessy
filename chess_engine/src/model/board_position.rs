@@ -9,11 +9,6 @@ pub struct BoardPosition {
     pub column: ChessFile,
 }
 
-{
-    "row": 8
-    "column": "a"
-}
-
 impl std::fmt::Display for BoardPosition {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}{}", self.column, self.row)
