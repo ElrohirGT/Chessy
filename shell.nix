@@ -15,4 +15,7 @@ in
 	nodejs
 	yarn
     ];
+    shellHook = ''
+      export RUST_BACKTRACE=1
+      '';
   }
