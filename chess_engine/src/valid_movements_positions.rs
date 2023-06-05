@@ -3,12 +3,73 @@ use super::*;
 /// Get's all the valid positions this piece can move on the given board.
 pub fn get_valid_movements_positions(piece: &ChessPiece, board: &Board) -> Vec<BoardPosition> {
     let mut pattern = get_movement_pattern(piece);
+
+    if let PieceTypes::King = piece.kind() {
+        return pattern
+            .into_iter()
+            .map(|path| path.0)
+            .flatten()
+            .filter(|pos| position_in_check(pos, piece.color(), board))
+            .collect();
+    }
+
     let pawn_capture_pattern: Option<Vec<BoardPath>> = get_capture_pattern(piece, board);
     if let (PieceTypes::Pawn, Some(mut paths)) = (piece.kind(), pawn_capture_pattern) {
         pattern.append(&mut paths);
     }
 
-    let possible_paths: Vec<BoardPath> = pattern
+    let paths: Vec<BoardPath> = colission_detection(pattern, piece, board);
+    let positions: Vec<BoardPosition> = paths.into_iter().map(|path| path.0).flatten().collect();
+
+    if let (true, Some(check_positions)) = (
+        board.is_in_check(&piece.color()),
+        board.get_check_positions(),
+    ) {
+        positions
+            .into_iter()
+            .filter(|pos| check_positions.contains(&pos))
+            .collect()
+    } else {
+        positions
+    }
+}
+
+fn get_valid_movements_positions_with_collisions(
+    piece: &ChessPiece,
+    board: &Board,
+) -> Vec<BoardPath> {
+    let mut pattern = get_movement_pattern(piece);
+    let pawn_capture_pattern: Option<Vec<BoardPath>> = get_capture_pattern(piece, board);
+
+    if let (PieceTypes::Pawn, Some(mut paths)) = (piece.kind(), pawn_capture_pattern) {
+        pattern.append(&mut paths);
+    }
+
+    let paths: Vec<BoardPath> = colission_detection(pattern, piece, board);
+    paths
+}
+
+/// Checks if a position would be in check in the given board.
+/// Returns true if the positions would be in check.
+fn position_in_check(position: &BoardPosition, color: &PieceColors, board: &Board) -> bool {
+    let opponent_pieces = board.get_pieces_from(color.opponent());
+    opponent_pieces
+        .iter()
+        .map(|piece| get_valid_movements_positions_with_collisions(piece, board))
+        .flatten()
+        .map(|path: BoardPath| path.0)
+        .flatten()
+        .any(|pos| pos == *position)
+}
+
+/// Checks all the paths and checks for collisions with another pieces.
+/// Returns the new paths now taking into account collision with other pieces.
+fn colission_detection(
+    pattern: Vec<BoardPath>,
+    piece: &ChessPiece,
+    board: &Board,
+) -> Vec<BoardPath> {
+    pattern
         .into_iter()
         .map(|path| {
             let path: Vec<BoardPosition> = path.0;
@@ -36,14 +97,11 @@ pub fn get_valid_movements_positions(piece: &ChessPiece, board: &Board) -> Vec<B
                 .collect::<Vec<BoardPosition>>()
         })
         .map(BoardPath::from)
-        .collect();
-    possible_paths
-        .into_iter()
-        .map(|path| path.0)
-        .flatten()
         .collect()
 }
 
+/// Get's the movement pattern of this piece if it can capture a piece.
+/// The only piece that actually needs this method is the pawn, because it can capture diagonally.
 fn get_capture_pattern(piece: &ChessPiece, board: &Board) -> Option<Vec<BoardPath>> {
     let oponent_color = piece.color().opponent();
     if let PieceTypes::Pawn = piece.kind() {
@@ -122,6 +180,8 @@ pub fn get_movement_pattern(piece: &ChessPiece) -> Vec<BoardPath> {
     }
 }
 
+/// Creates a pattern of movement from a vec of positions.
+/// Each position assumes that the piece is located at 0,0. Negative positions are allowed.
 fn pattern_from_vec(vec: Vec<(isize, isize)>, row: usize, column: usize) -> Vec<BoardPath> {
     vec.into_iter()
         .map(|(r, c): (isize, isize)| (row as isize + r, column as isize + c))

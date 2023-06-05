@@ -1,7 +1,7 @@
 use super::*;
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct BoardPath(pub Vec<BoardPosition>);
 
 impl From<Vec<BoardPosition>> for BoardPath {

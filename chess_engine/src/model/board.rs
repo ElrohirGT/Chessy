@@ -1,10 +1,10 @@
-use crate::BoardPath;
+use crate::{BoardPath, ChessPiece};
 
 use super::{BoardPosition, ChessCell, PieceColors};
 
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CheckedState {
     pub color_in_check: PieceColors,
     pub check_paths: Vec<BoardPath>,
@@ -12,16 +12,28 @@ pub struct CheckedState {
 
 #[derive(Debug, Serialize)]
 pub struct Board {
+    pub black_pieces: Vec<ChessPiece>,
+    pub white_pieces: Vec<ChessPiece>,
     pub check_state: Option<CheckedState>,
     pub cells: Vec<Vec<ChessCell>>,
 }
 
 impl Board {
-    pub fn new(cells: Vec<Vec<ChessCell>>, check_state: Option<CheckedState>) -> Self {
-        Board { cells, check_state }
+    pub fn new(
+        cells: Vec<Vec<ChessCell>>,
+        black_pieces: Vec<ChessPiece>,
+        white_pieces: Vec<ChessPiece>,
+        check_state: Option<CheckedState>,
+    ) -> Self {
+        Board {
+            cells,
+            black_pieces,
+            white_pieces,
+            check_state,
+        }
     }
 
-    pub fn color_in_check(&self, owner: &PieceColors) -> bool {
+    pub fn is_in_check(&self, owner: &PieceColors) -> bool {
         if let Some(CheckedState { color_in_check, .. }) = &self.check_state {
             color_in_check == owner
         } else {
@@ -32,5 +44,25 @@ impl Board {
     pub fn get_cell(&self, position: BoardPosition) -> &ChessCell {
         let (row, column): (usize, usize) = position.into();
         (&self).cells.get(row).unwrap().get(column).unwrap()
+    }
+
+    pub fn get_check_positions(&self) -> Option<Vec<BoardPosition>> {
+        match &self.check_state {
+            Some(CheckedState { check_paths, .. }) => Some(
+                check_paths
+                    .iter()
+                    .map(|pos: &BoardPath| pos.clone().0)
+                    .flatten()
+                    .collect(),
+            ),
+            None => None,
+        }
+    }
+
+    pub fn get_pieces_from(&self, opponent: PieceColors) -> &Vec<ChessPiece> {
+        match opponent {
+            PieceColors::Black => &self.white_pieces,
+            PieceColors::White => &self.black_pieces,
+        }
     }
 }

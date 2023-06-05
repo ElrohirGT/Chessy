@@ -2,11 +2,11 @@ use super::*;
 
 /// Get's the initial board of the game.
 pub fn get_starting_board() -> Board {
-    let cells = generate_starting_chess_cells();
-    Board::new(cells, None)
+    let (white_pieces, black_pieces, cells) = generate_starting_chess_cells();
+    Board::new(cells, white_pieces, black_pieces, None)
 }
 
-fn generate_starting_chess_cells() -> Vec<Vec<ChessCell>> {
+fn generate_starting_chess_cells() -> (Vec<ChessPiece>, Vec<ChessPiece>, Vec<Vec<ChessCell>>) {
     let white_pawns: Vec<ChessCell> = ('a'..='h')
         .map(|c| format!("{}2", c))
         .map(|c| c.as_str().try_into().unwrap())
@@ -27,7 +27,7 @@ fn generate_starting_chess_cells() -> Vec<Vec<ChessCell>> {
         })
         .collect();
 
-    let white_back_rank: Vec<ChessCell> = ('a'..='h')
+    let mut white_back_rank: Vec<ChessCell> = ('a'..='h')
         .map(|c| {
             let position: BoardPosition = format!("{}1", c).as_str().try_into().unwrap();
             match c {
@@ -46,7 +46,7 @@ fn generate_starting_chess_cells() -> Vec<Vec<ChessCell>> {
         .map(ChessCell::some)
         .collect();
 
-    let black_back_rank: Vec<ChessCell> = ('a'..='h')
+    let mut black_back_rank: Vec<ChessCell> = ('a'..='h')
         .map(|c| {
             let position: BoardPosition = format!("{}1", c).as_str().try_into().unwrap();
             match c {
@@ -65,14 +65,31 @@ fn generate_starting_chess_cells() -> Vec<Vec<ChessCell>> {
         .map(ChessCell::some)
         .collect();
 
-    vec![
-        white_back_rank,
-        white_pawns,
-        white_space.pop().unwrap(),
-        white_space.pop().unwrap(),
-        white_space.pop().unwrap(),
-        white_space.pop().unwrap(),
-        black_pawns,
-        black_back_rank,
-    ]
+    white_back_rank.append(&mut white_pawns.clone());
+    black_back_rank.append(&mut black_pawns.clone());
+
+    let white_pieces = white_back_rank
+        .clone()
+        .into_iter()
+        .map(|cell| cell.0.unwrap())
+        .collect();
+    let black_pieces = black_back_rank
+        .clone()
+        .into_iter()
+        .map(|cell| cell.0.unwrap())
+        .collect();
+    (
+        white_pieces,
+        black_pieces,
+        vec![
+            white_back_rank,
+            white_pawns,
+            white_space.pop().unwrap(),
+            white_space.pop().unwrap(),
+            white_space.pop().unwrap(),
+            white_space.pop().unwrap(),
+            black_pawns,
+            black_back_rank,
+        ],
+    )
 }

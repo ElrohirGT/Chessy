@@ -2,8 +2,8 @@ use super::{ChessPiece, PieceColors};
 
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
-pub struct ChessCell(Option<ChessPiece>);
+#[derive(Debug, Clone, Serialize)]
+pub struct ChessCell(pub Option<ChessPiece>);
 impl ChessCell {
     pub fn some(piece: ChessPiece) -> ChessCell {
         ChessCell(Some(piece))
