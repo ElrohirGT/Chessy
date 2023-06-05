@@ -1,6 +1,7 @@
 use super::{BoardPosition, PieceColors, PieceTypes};
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ChessPiece {
     kind: PieceTypes,
     position: BoardPosition,

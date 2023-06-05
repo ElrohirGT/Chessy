@@ -1,7 +1,9 @@
 use super::{ArrayIndex, FromArrayIndexError};
 use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ChessFile(char);
 impl std::fmt::Display for ChessFile {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

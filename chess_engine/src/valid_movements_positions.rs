@@ -11,7 +11,7 @@ pub fn get_valid_movements_positions(piece: &ChessPiece, board: &Board) -> Vec<B
     let possible_paths: Vec<BoardPath> = pattern
         .into_iter()
         .map(|path| {
-            let path: Vec<BoardPosition> = path.into();
+            let path: Vec<BoardPosition> = path.0;
             path.into_iter()
                 .scan(false, |found_piece, position| {
                     if *found_piece {
@@ -39,7 +39,7 @@ pub fn get_valid_movements_positions(piece: &ChessPiece, board: &Board) -> Vec<B
         .collect();
     possible_paths
         .into_iter()
-        .map(Vec::<BoardPosition>::from)
+        .map(|path| path.0)
         .flatten()
         .collect()
 }

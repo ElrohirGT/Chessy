@@ -1,22 +1,29 @@
+use crate::BoardPath;
+
 use super::{BoardPosition, ChessCell, PieceColors};
 
-#[derive(Debug)]
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
+pub struct CheckedState {
+    pub color_in_check: PieceColors,
+    pub check_paths: Vec<BoardPath>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct Board {
-    pub color_in_check: Option<PieceColors>,
+    pub check_state: Option<CheckedState>,
     pub cells: Vec<Vec<ChessCell>>,
 }
 
 impl Board {
-    pub fn new(cells: Vec<Vec<ChessCell>>, color_in_check: Option<PieceColors>) -> Board {
-        Board {
-            cells,
-            color_in_check,
-        }
+    pub fn new(cells: Vec<Vec<ChessCell>>, check_state: Option<CheckedState>) -> Self {
+        Board { cells, check_state }
     }
 
     pub fn color_in_check(&self, owner: &PieceColors) -> bool {
-        if let Some(color) = &self.color_in_check {
-            color == owner
+        if let Some(CheckedState { color_in_check, .. }) = &self.check_state {
+            color_in_check == owner
         } else {
             false
         }

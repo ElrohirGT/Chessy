@@ -3,7 +3,9 @@ use crate::{ArrayIndex, FileInstancingErrors, RankInstancingErrors};
 pub use super::{ChessFile, ChessRank, FromMatrixPositionError, MatrixPosition};
 use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BoardPosition {
     pub row: ChessRank,
     pub column: ChessFile,
