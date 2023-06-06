@@ -1,21 +1,28 @@
 let
-  moz_overlay = import (builtins.fetchTarball https://github.com/mozilla/nixpkgs-mozilla/archive/master.tar.gz);
-  nixpkgs = import <nixpkgs> { overlays = [ moz_overlay ]; };
+  rust_overlay = import (builtins.fetchTarball https://github.com/oxalica/rust-overlay/archive/master.tar.gz);
+  nixpkgs = import <nixpkgs> { overlays = [ rust_overlay ]; };
 in
   with nixpkgs;
   stdenv.mkDerivation {
-    name = "moz_overlay_shell";
+    name = "rust_overlay_shell";
     buildInputs = [
       # to use the latest nightly:
-      nixpkgs.latest.rustChannels.stable.rust
+      (rust-bin.fromRustupToolchainFile ./rust-toolchain)
       # to use a specific nighly:
       # (nixpkgs.rustChannelOf { date = "2022-03-29"; channel = "stable"; }).rust
       # to use the project's rust-toolchain file:
       # (nixpkgs.rustChannelOf { rustToolchain = ./rust-toolchain; }).rust
-	nodejs
-	yarn
+      openssl
+      pkg-config
+      exa
+      fd
+      nodejs
+      yarn
+      wasm-pack
     ];
     shellHook = ''
       export RUST_BACKTRACE=1
+      alias ls=exa
+      alias find=fd
       '';
   }
