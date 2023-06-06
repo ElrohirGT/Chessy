@@ -27,5 +27,19 @@ pub fn move_piece(
     destination: BoardPosition,
     board: Board,
 ) -> Result<MovementSuccess, MovementError> {
-    Ok(MovementSuccess::NormalMovement(board))
+    let piece_in_dest = board.get_piece(&destination);
+    if let Some(p) = piece_in_dest {
+        if p.color() == piece.color() {
+            return Err(MovementError::DestinationCellOccupied);
+        }
+    }
+
+    if let Some(check_positions) = board.get_check_positions() {
+        if check_positions.contains(&destination) {
+            return Err(MovementError::MovementDoesntRemoveCheck);
+        }
+
+        let valid_paths = get_movement_paths(&piece, &board);
+    }
+    todo!();
 }

@@ -106,3 +106,9 @@ impl Into<(usize, usize)> for BoardPosition {
         (self.row.to_index(), self.column.to_index())
     }
 }
+
+impl Into<(usize, usize)> for &BoardPosition {
+    fn into(self) -> (usize, usize) {
+        (self.row.to_index(), self.column.to_index())
+    }
+}
