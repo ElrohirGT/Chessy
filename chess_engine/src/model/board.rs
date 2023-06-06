@@ -2,15 +2,15 @@ use crate::{BoardPath, ChessPiece};
 
 use super::{BoardPosition, ChessCell, PieceColors};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CheckedState {
     pub color_in_check: PieceColors,
     pub check_paths: Vec<BoardPath>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Board {
     pub black_pieces: Vec<ChessPiece>,
     pub white_pieces: Vec<ChessPiece>,

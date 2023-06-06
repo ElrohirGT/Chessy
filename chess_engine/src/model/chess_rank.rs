@@ -1,9 +1,9 @@
 use super::{ArrayIndex, FromArrayIndexError};
+
+use serde::{Serialize, Deserialize};
 use thiserror::Error;
 
-use serde::Serialize;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ChessRank(usize);
 impl std::fmt::Display for ChessRank {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

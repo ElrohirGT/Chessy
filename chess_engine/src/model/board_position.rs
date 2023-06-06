@@ -1,11 +1,11 @@
 use crate::{ArrayIndex, FileInstancingErrors, RankInstancingErrors};
 
 pub use super::{ChessFile, ChessRank, FromMatrixPositionError, MatrixPosition};
+
+use serde::{Serialize, Deserialize};
 use thiserror::Error;
 
-use serde::Serialize;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BoardPosition {
     pub row: ChessRank,
     pub column: ChessFile,
