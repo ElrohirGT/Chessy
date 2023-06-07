@@ -114,7 +114,12 @@ fn get_capture_pattern(piece: &ChessPiece, board: &Board) -> Option<Vec<BoardPat
     let oponent_color = piece.color().opponent();
     if let PieceTypes::Pawn = piece.kind() {
         let (row, column) = piece.position();
-        let paths: Vec<BoardPath> = vec![(1, -1), (1, 1)]
+        let positions_to_check = match piece.color() {
+            PieceColors::Black => vec![(-1, -1), (-1, 1)],
+            PieceColors::White => vec![(1, -1), (1, 1)],
+        };
+
+        let paths: Vec<BoardPath> = positions_to_check
             .into_iter()
             .filter_map(|(r, c): (isize, isize)| {
                 board.get_piece(&((row as isize + r, column as isize + c).try_into().ok()?))
