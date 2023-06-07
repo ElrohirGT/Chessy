@@ -1,0 +1,9 @@
+{
+  "name": "Chessy",
+  "version": "1.0.0",
+  "description": "A multiplayer chess online",
+  "main": "index.js",
+  "repository": "git@github.com-personal:ElrohirGT/Chessy.git",
+  "author": "Daniel Rayo & Flavio Galan",
+  "license": "MIT"
+}
