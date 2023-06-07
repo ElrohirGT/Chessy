@@ -2,7 +2,7 @@ use crate::{ArrayIndex, FileInstancingErrors, RankInstancingErrors};
 
 pub use super::{ChessFile, ChessRank, FromMatrixPositionError, MatrixPosition};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

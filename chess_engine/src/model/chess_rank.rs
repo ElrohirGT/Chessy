@@ -1,6 +1,6 @@
 use super::{ArrayIndex, FromArrayIndexError};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
