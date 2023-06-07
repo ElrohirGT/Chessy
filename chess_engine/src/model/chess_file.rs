@@ -35,7 +35,7 @@ impl ArrayIndex for ChessFile {
 
     fn from_index(value: usize) -> Result<Self, FromArrayIndexError> {
         match value {
-            0..=7 => Ok(ChessFile( ((value as u8) + 97) as char)),
+            0..=7 => Ok(ChessFile(((value as u8) + 97) as char)),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
             _ => unreachable!(),
         }

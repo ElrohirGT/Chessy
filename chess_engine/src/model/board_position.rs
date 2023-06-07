@@ -102,12 +102,14 @@ impl TryFrom<(usize, usize)> for BoardPosition {
 }
 
 impl Into<(usize, usize)> for BoardPosition {
+    /// Converts the board position into a tuple of array indeces.
     fn into(self) -> (usize, usize) {
         (self.row.to_index(), self.column.to_index())
     }
 }
 
 impl Into<(usize, usize)> for &BoardPosition {
+    /// Converts the board position into a tuple of array indeces.
     fn into(self) -> (usize, usize) {
         (self.row.to_index(), self.column.to_index())
     }

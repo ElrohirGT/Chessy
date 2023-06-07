@@ -25,6 +25,7 @@ impl ChessPiece {
         &self.owner
     }
 
+    /// Retrieves the piece position in the form of a tuple of array indeces.
     pub fn position(&self) -> (usize, usize) {
         (&self)
             .position
