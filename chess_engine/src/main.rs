@@ -10,7 +10,7 @@ fn main() {
             "e1".try_into().unwrap(),
             PieceColors::White,
         ),
-        "e2".try_into().unwrap(),
+        "e4".try_into().unwrap(),
         board,
     );
 
