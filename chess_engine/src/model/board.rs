@@ -71,4 +71,55 @@ impl Board {
             PieceColors::White => &self.black_pieces,
         }
     }
+
+    /// Moves a piece in the board itself. This method expects everything passed to it to be
+    /// correct, so it doesn't checks for collisions nor movement patterns.
+    pub(crate) fn move_piece(self, mut piece: ChessPiece, destination: BoardPosition) -> Board {
+        piece.update_position(destination.clone());
+        let Board {
+            mut black_pieces,
+            mut white_pieces,
+            check_state,
+            mut cells,
+        } = self;
+        let (dest_row, dest_column) = destination.into();
+
+        let cell = cells
+            .get_mut(dest_row)
+            .unwrap()
+            .get_mut(dest_column)
+            .unwrap();
+
+        *cell = match cell.piece() {
+            Some(piece_in_cell) => match piece_in_cell.color() {
+                PieceColors::Black => {
+                    let index = black_pieces
+                        .iter()
+                        .position(|p| p == &piece_in_cell)
+                        .expect(
+                            format!("Theres no black piece that matches {:?}", &piece_in_cell)
+                                .as_str(),
+                        );
+                    black_pieces.remove(index);
+
+                    ChessCell::some(piece)
+                }
+                PieceColors::White => {
+                    let index = white_pieces
+                        .iter()
+                        .position(|p| p == &piece_in_cell)
+                        .expect(
+                            format!("Theres no white piece that matches {:?}", &piece_in_cell)
+                                .as_str(),
+                        );
+                    white_pieces.remove(index);
+
+                    ChessCell::some(piece)
+                }
+            },
+            None => ChessCell::some(piece),
+        };
+
+        Board::new(cells, black_pieces, white_pieces, check_state)
+    }
 }

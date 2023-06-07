@@ -1,7 +1,7 @@
 use super::{BoardPosition, PieceColors, PieceTypes};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 pub struct ChessPiece {
     kind: PieceTypes,
     position: BoardPosition,
@@ -32,5 +32,10 @@ impl ChessPiece {
             .clone()
             .try_into()
             .expect("Coudln't convert the position to (usize, usize)")
+    }
+
+    /// Updates the inner position of this piece.
+    pub(crate) fn update_position(&mut self, destination: BoardPosition) {
+        (*self).position = destination;
     }
 }
