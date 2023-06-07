@@ -1,6 +1,6 @@
 use super::{ChessPiece, PieceColors};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChessCell(pub Option<ChessPiece>);

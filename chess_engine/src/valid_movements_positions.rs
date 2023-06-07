@@ -44,7 +44,7 @@ pub fn get_valid_movements_positions(piece: ChessPiece, board: Board) -> Vec<Boa
     }
 }
 
-/// Checks if a position would be in check in the given board.
+/// Checks if a king of the given color in the given position would be in check in the given board.
 /// Returns true if the positions would be in check.
 pub fn position_in_check(position: &BoardPosition, color: &PieceColors, board: &Board) -> bool {
     let opponent_pieces = board.get_pieces_from(color.opponent());
