@@ -14,14 +14,78 @@ pub fn create_game(config: GameConfig) -> Game {
     Game::new(config)
 }
 
+/// Check if the given chess piece is a pawn and is on the starting position of the pawn color.
+/// The starting position for white pawns is the second rank.
+/// The starting position for black pawns is the seventh rank.
+pub fn is_pawn_on_starting_position(piece: &ChessPiece) -> bool {
+    let white_starting_row: ChessRank = 2.try_into().unwrap();
+    let black_starting_row: ChessRank = 7.try_into().unwrap();
+
+    let (row, _) = piece.position();
+
+    if let PieceTypes::Pawn = piece.kind() {
+        if let PieceColors::White = piece.color() {
+            row == white_starting_row.to_index()
+        } else {
+            row == black_starting_row.to_index()
+        }
+    } else {
+        false
+    }
+}
+
 /// Get's all the possible movements, valid or invalid that a given piece can make.
 /// The return value is a collections of paths the given piece can make. This makes easier for
 /// checking for collisions down the line.
 pub fn get_movement_pattern(piece: &ChessPiece) -> Vec<BoardPath> {
     let kind = *piece.kind();
     let (row, column) = piece.position();
+
     match kind {
-        PieceTypes::Pawn => vec![BoardPath(vec![(row + 1, column).try_into().unwrap()])],
+        PieceTypes::Pawn => match (piece.color(), is_pawn_on_starting_position(piece)) {
+            (PieceColors::Black, true) => {
+                let positions = vec![
+                    format!("{}{}", column, row - 1),
+                    format!("{}{}", column, row - 2),
+                ];
+                let path: Vec<BoardPosition> = positions
+                    .iter()
+                    .map(|s| s.as_str().try_into())
+                    .filter(Result::is_ok)
+                    .map(Result::unwrap)
+                    .collect();
+                vec![BoardPath(path)]
+            }
+            (PieceColors::Black, false) => {
+                let position = format!("{}{}", column, row - 1);
+                if let Ok(position) = position.as_str().try_into() {
+                    vec![BoardPath(vec![position])]
+                } else {
+                    vec![BoardPath(vec![])]
+                }
+            }
+            (PieceColors::White, true) => {
+                let positions = vec![
+                    format!("{}{}", column, row + 1),
+                    format!("{}{}", column, row + 2),
+                ];
+                let path: Vec<BoardPosition> = positions
+                    .iter()
+                    .map(|s| s.as_str().try_into())
+                    .filter(Result::is_ok)
+                    .map(Result::unwrap)
+                    .collect();
+                vec![BoardPath(path)]
+            }
+            (PieceColors::White, false) => {
+                let position = format!("{}{}", column, row + 1);
+                if let Ok(position) = position.as_str().try_into() {
+                    vec![BoardPath(vec![position])]
+                } else {
+                    vec![BoardPath(vec![])]
+                }
+            }
+        },
         PieceTypes::Rook => rook_movement_pattern(row, column),
         PieceTypes::Knight => pattern_from_vec(
             vec![
