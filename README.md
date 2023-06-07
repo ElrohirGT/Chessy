@@ -27,6 +27,6 @@ cargo build --lib
 You can also compile the Chess Engine to be used on web assembly by running:
 ```bash
 cd chess_engine
-wasm-pack pack --target web
+wasm-pack build --target web
 ```
 This generates a pkg directory inside the `chess_engine` directory. This folder represents the module to be used inside the javascript client. [For more information you can watch this video](https://www.youtube.com/watch?v=nW71Mlbmxt8)
