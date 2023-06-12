@@ -33,7 +33,7 @@ impl TryFrom<&str> for BoardPosition {
     type Error = BoardPositionFromStrErrors;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.chars().count() == 2 {
-            let column = ChessFile::try_from(value.chars().next().unwrap())
+            let column = ChessFile::try_from(value.chars().nth(0).unwrap())
                 .map_err(BoardPositionFromStrErrors::InvalidColumnFormat)?;
             let row: usize = value.get(1..=1).unwrap().parse().map_err(|_| {
                 BoardPositionFromStrErrors::RankMustBeANumber(value.get(1..=1).unwrap().to_string())
@@ -92,6 +92,8 @@ pub enum BoardPositionFromUsizeErrors {
 
 impl TryFrom<(usize, usize)> for BoardPosition {
     type Error = BoardPositionFromUsizeErrors;
+
+    /// Parses a board position from a tuple of indices.
     fn try_from((row, column): (usize, usize)) -> Result<Self, Self::Error> {
         let row =
             ChessRank::from_index(row).map_err(|_| BoardPositionFromUsizeErrors::RankTooHigh)?;

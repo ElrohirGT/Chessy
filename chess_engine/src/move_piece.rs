@@ -28,7 +28,6 @@ pub fn move_piece(
     board: Board,
 ) -> Result<MovementSuccess, MovementError> {
     let piece_color = piece.color().clone();
-    let opponent_piece_color = piece.color().opponent();
 
     let piece_in_dest = board.get_piece(&destination);
     let destination_has_piece = piece_in_dest.is_some();
@@ -38,54 +37,65 @@ pub fn move_piece(
         false
     };
 
+    let is_king = if let PieceTypes::King = piece.kind() {
+        true
+    } else {
+        false
+    };
+
     if destination_has_piece && both_same_color {
         return Err(MovementError::DestinationCellOccupied);
     }
 
     if let Some(check_positions) = board.get_check_positions() {
-        let is_king = if let PieceTypes::King = piece.kind() {
-            true
-        } else {
-            false
-        };
-
         return match (is_king, check_positions.contains(&destination)) {
             (true, true) => Err(MovementError::MovementWouldCauseCheck),
             (false, false) => Err(MovementError::MovementDoesntRemoveCheck),
             // The destination is a valid piece destination according to the piece type.
             // King: The destination is a position where he's not in check.
             // Any other piece: The destination blocks a check path.
-            (is_king, _) => {
-                let movement_pattern = get_movement_pattern(&piece);
-                let movement_positions: Vec<BoardPosition> = movement_pattern
-                    .into_iter()
-                    .map(|path| path.0)
-                    .flatten()
-                    .collect();
-
-                if !movement_positions.contains(&destination) {
-                    return Err(MovementError::DestinationDoesntFollowMovementPattern);
-                }
-
-                let board = board.move_piece(piece, &destination);
-
-                let king_position = if is_king {
-                    destination
-                } else {
-                    board.get_king_position(&piece_color)
-                };
-
-                if board.position_in_check(&king_position, &piece_color) {
-                    Err(MovementError::MovementDoesntRemoveCheck)
-                } else if board.is_checkmate(&opponent_piece_color) {
-                    Ok(MovementSuccess::CheckmateMovement(board))
-                } else if board.is_stalemate(&opponent_piece_color) {
-                    Ok(MovementSuccess::StalemateMovement(board))
-                } else {
-                    Ok(MovementSuccess::NormalMovement(board))
-                }
-            }
+            (is_king, _) => inner_move_piece(is_king, piece, destination, board),
         };
+    } else {
+        inner_move_piece(is_king, piece, destination, board)
     }
-    todo!();
+}
+
+fn inner_move_piece(
+    is_king: bool,
+    piece: ChessPiece,
+    destination: BoardPosition,
+    board: Board,
+) -> Result<MovementSuccess, MovementError> {
+    let piece_color = piece.color().clone();
+    let opponent_piece_color = piece_color.opponent();
+
+    let movement_pattern = get_movement_pattern(&piece);
+    let movement_positions: Vec<BoardPosition> = movement_pattern
+        .into_iter()
+        .map(|path| path.0)
+        .flatten()
+        .collect();
+
+    if !movement_positions.contains(&destination) {
+        return Err(MovementError::DestinationDoesntFollowMovementPattern);
+    }
+
+    let board = board.move_piece(piece, &destination);
+
+    let king_position = if is_king {
+        destination
+    } else {
+        board.get_king_position(&piece_color)
+    };
+
+    if board.position_in_check(&king_position, &piece_color) {
+        Err(MovementError::MovementDoesntRemoveCheck)
+    } else if board.is_checkmate(&opponent_piece_color) {
+        Ok(MovementSuccess::CheckmateMovement(board))
+    } else if board.is_stalemate(&opponent_piece_color) {
+        Ok(MovementSuccess::StalemateMovement(board))
+    } else {
+        Ok(MovementSuccess::NormalMovement(board))
+    }
 }

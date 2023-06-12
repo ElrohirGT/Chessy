@@ -44,42 +44,36 @@ pub fn get_movement_pattern(piece: &ChessPiece) -> Vec<BoardPath> {
     match kind {
         PieceTypes::Pawn => match (piece.color(), is_pawn_on_starting_position(piece)) {
             (PieceColors::Black, true) => {
-                let positions = vec![
-                    format!("{}{}", column, row - 1),
-                    format!("{}{}", column, row - 2),
-                ];
+                let positions = vec![(row - 1, column), (row - 2, column)];
                 let path: Vec<BoardPosition> = positions
-                    .iter()
-                    .map(|s| s.as_str().try_into())
+                    .into_iter()
+                    .map(|s| s.try_into())
                     .filter(Result::is_ok)
                     .map(Result::unwrap)
                     .collect();
                 vec![BoardPath(path)]
             }
             (PieceColors::Black, false) => {
-                let position = format!("{}{}", column, row - 1);
-                if let Ok(position) = position.as_str().try_into() {
+                let position = (row - 1, column);
+                if let Ok(position) = position.try_into() {
                     vec![BoardPath(vec![position])]
                 } else {
                     vec![BoardPath(vec![])]
                 }
             }
             (PieceColors::White, true) => {
-                let positions = vec![
-                    format!("{}{}", column, row + 1),
-                    format!("{}{}", column, row + 2),
-                ];
+                let positions = vec![(row + 1, column), (row + 2, column)];
                 let path: Vec<BoardPosition> = positions
-                    .iter()
-                    .map(|s| s.as_str().try_into())
+                    .into_iter()
+                    .map(|s| s.try_into())
                     .filter(Result::is_ok)
                     .map(Result::unwrap)
                     .collect();
                 vec![BoardPath(path)]
             }
             (PieceColors::White, false) => {
-                let position = format!("{}{}", column, row + 1);
-                if let Ok(position) = position.as_str().try_into() {
+                let position = (row + 1, column);
+                if let Ok(position) = position.try_into() {
                     vec![BoardPath(vec![position])]
                 } else {
                     vec![BoardPath(vec![])]
@@ -140,16 +134,16 @@ fn pattern_from_vec(vec: Vec<(isize, isize)>, row: usize, column: usize) -> Vec<
 fn rook_movement_pattern(row: usize, column: usize) -> Vec<BoardPath> {
     (0..4)
         .map(|i| match i {
-            1 => (1..(7 - row))
+            0 => (1..(7 - row))
                 .filter_map(|i| (row + i, column).try_into().ok())
                 .collect(),
-            2 => (1..(7 - column))
+            1 => (1..(7 - column))
                 .filter_map(|i| (row, column + i).try_into().ok())
                 .collect(),
-            3 => (1..row)
+            2 => (1..row)
                 .filter_map(|i| (row - i, column).try_into().ok())
                 .collect(),
-            4 => (1..column)
+            3 => (1..column)
                 .filter_map(|i| (row, column - i).try_into().ok())
                 .collect(),
             _ => unreachable!(),

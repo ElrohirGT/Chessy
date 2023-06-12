@@ -34,7 +34,7 @@ impl ArrayIndex for ChessRank {
 
     fn from_index(value: usize) -> Result<Self, FromArrayIndexError> {
         match value {
-            0..=7 => Ok(ChessRank(value)),
+            0..=7 => Ok(ChessRank(value + 1)),
             8..=usize::MAX => Err(FromArrayIndexError::IndexTooBig(7)),
             _ => unreachable!(),
         }

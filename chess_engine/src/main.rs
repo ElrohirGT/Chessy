@@ -7,7 +7,7 @@ fn main() {
     let respone = move_piece(
         ChessPiece::new(
             PieceTypes::Pawn,
-            "e1".try_into().unwrap(),
+            "e2".try_into().unwrap(),
             PieceColors::White,
         ),
         "e4".try_into().unwrap(),

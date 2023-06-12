@@ -89,7 +89,7 @@ impl Board {
         let Board {
             mut black_pieces,
             mut white_pieces,
-            mut check_state,
+            check_state,
             mut cells,
             mut white_king_position,
             mut black_king_position,
@@ -103,7 +103,6 @@ impl Board {
 
         let (dest_row, dest_column) = destination.into();
         let piece_color = piece.color().clone();
-        let piece_kind = piece.kind().clone();
 
         let cell = cells
             .get_mut(dest_row)
