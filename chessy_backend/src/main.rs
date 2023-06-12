@@ -40,9 +40,11 @@ async fn main() -> std::io::Result<()> {
                 http::header::CONTENT_TYPE,
             ])
             .max_age(3600);
+        // Allow all origins CORS.
+        let cors = Cors::default();
         App::new()
             .app_data(state.clone())
-            // .wrap(cors)
+            .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
             .configure(routes::configure_routes)
