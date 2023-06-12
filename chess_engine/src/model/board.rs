@@ -262,10 +262,10 @@ impl Board {
                 if color_in_check == color {
                     false
                 } else {
-                    self.can_any_piece_move(color)
+                    !self.can_any_piece_move(color)
                 }
             }
-            None => self.can_any_piece_move(color),
+            None => !self.can_any_piece_move(color),
         }
     }
 
