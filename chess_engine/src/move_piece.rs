@@ -52,9 +52,10 @@ pub fn move_piece(
         return match (is_king, check_positions.contains(&destination)) {
             (true, true) => Err(MovementError::MovementWouldCauseCheck),
             (false, false) => Err(MovementError::MovementDoesntRemoveCheck),
-            // The piece is King and the destination position is not in the current check
-            // positions.
-            (true, false) => {
+            // The destination is a valid piece destination according to the piece type.
+            // King: The destination is a position where he's not in check.
+            // Any other piece: The destination blocks a check path.
+            (is_king, _) => {
                 let movement_pattern = get_movement_pattern(&piece);
                 let movement_positions: Vec<BoardPosition> = movement_pattern
                     .into_iter()
@@ -66,23 +67,25 @@ pub fn move_piece(
                     return Err(MovementError::DestinationDoesntFollowMovementPattern);
                 }
 
-                let board_with_movement: Board = board.move_piece(piece, destination.clone());
-                if position_in_check(&destination, &piece_color, &board_with_movement) {
-                    Err(MovementError::MovementDoesntRemoveCheck)
-                } else if is_stalemate(opponent_piece_color, &board_with_movement) {
-                    Ok(MovementSuccess::StalemateMovement(board_with_movement))
+                let board = board.move_piece(piece, &destination);
+
+                let king_position = if is_king {
+                    destination
                 } else {
-                    Ok(MovementSuccess::NormalMovement(board_with_movement))
+                    board.get_king_position(&piece_color)
+                };
+
+                if board.position_in_check(&king_position, &piece_color) {
+                    Err(MovementError::MovementDoesntRemoveCheck)
+                } else if board.is_checkmate(&opponent_piece_color) {
+                    Ok(MovementSuccess::CheckmateMovement(board))
+                } else if board.is_stalemate(&opponent_piece_color) {
+                    Ok(MovementSuccess::StalemateMovement(board))
+                } else {
+                    Ok(MovementSuccess::NormalMovement(board))
                 }
             }
-            // The piece is not a King and the destination position is in the current check
-            // positions.
-            (false, true) => todo!(),
         };
     }
     todo!();
-}
-
-fn is_stalemate(opponent: PieceColors, board_with_movement: &Board) -> bool {
-    todo!()
 }

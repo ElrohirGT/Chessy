@@ -3,7 +3,16 @@ use super::*;
 /// Get's the initial board of the game.
 pub fn get_starting_board() -> Board {
     let (white_pieces, black_pieces, cells) = generate_starting_chess_cells();
-    Board::new(cells, white_pieces, black_pieces, None)
+    let white_king_position = "e1".try_into().unwrap();
+    let black_king_position = "e8".try_into().unwrap();
+    Board::new(
+        cells,
+        white_pieces,
+        black_pieces,
+        white_king_position,
+        black_king_position,
+        None,
+    )
 }
 
 fn generate_starting_chess_cells() -> (Vec<ChessPiece>, Vec<ChessPiece>, Vec<Vec<ChessCell>>) {
