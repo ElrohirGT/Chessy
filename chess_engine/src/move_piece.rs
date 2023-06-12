@@ -70,7 +70,7 @@ fn inner_move_piece(
     let piece_color = piece.color().clone();
     let opponent_piece_color = piece_color.opponent();
 
-    let movement_pattern = get_movement_pattern(&piece);
+    let movement_pattern = board.get_movement_paths(&piece);
     let movement_positions: Vec<BoardPosition> = movement_pattern
         .into_iter()
         .map(|path| path.0)

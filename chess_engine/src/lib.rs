@@ -167,3 +167,57 @@ fn bishop_movement_pattern(row: usize, column: usize) -> Vec<BoardPath> {
         .map(BoardPath::from)
         .collect()
 }
+
+pub fn is_en_passant_to_the_right(origin: &BoardPosition, destination: &BoardPosition) -> bool {
+    let (row, colum) = origin.into();
+    let patterns = vec![(1, 1), (-1, 1)];
+
+    let en_passant_to_the_right_pos: Vec<BoardPosition> = patterns
+        .into_iter()
+        .map(|(r, c)| (row as isize + r, colum as isize + c))
+        .filter_map(|s| s.try_into().ok())
+        .collect();
+    en_passant_to_the_right_pos.contains(&destination)
+}
+
+pub fn get_en_passant_to_the_right_pos(position: &BoardPosition) -> BoardPosition {
+    let (row, column) = position.into();
+
+    (row, column + 1).try_into().expect(
+        format!(
+            "The en passant to the right position is invalid! `({},{})` -> `({},{})`",
+            row,
+            column,
+            row,
+            column + 1
+        )
+        .as_str(),
+    )
+}
+
+pub fn is_en_passant_to_the_left(origin: &BoardPosition, destination: &BoardPosition) -> bool {
+    let (row, colum) = origin.into();
+    let patterns = vec![(1, -1), (-1, -1)];
+
+    let positions: Vec<BoardPosition> = patterns
+        .into_iter()
+        .map(|(r, c)| (row as isize + r, colum as isize + c))
+        .filter_map(|s| s.try_into().ok())
+        .collect();
+    positions.contains(&destination)
+}
+
+pub fn get_en_passant_to_the_left_pos(position: &BoardPosition) -> BoardPosition {
+    let (row, column) = position.into();
+
+    (row, column - 1).try_into().expect(
+        format!(
+            "The en passant to the right position is invalid! `({},{})` -> `({},{})`",
+            row,
+            column,
+            row,
+            column - 1
+        )
+        .as_str(),
+    )
+}

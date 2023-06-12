@@ -12,6 +12,7 @@ pub fn get_starting_board() -> Board {
         white_king_position,
         black_king_position,
         None,
+        None,
     )
 }
 

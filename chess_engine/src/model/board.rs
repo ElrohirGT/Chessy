@@ -1,5 +1,7 @@
 use crate::{
-    get_movement_pattern, get_valid_movements_positions, BoardPath, ChessPiece, PieceTypes,
+    get_en_passant_to_the_left_pos, get_en_passant_to_the_right_pos, get_movement_pattern,
+    get_valid_movements_positions, is_en_passant_to_the_left, is_en_passant_to_the_right,
+    is_pawn_on_starting_position, BoardPath, ChessPiece, PieceTypes,
 };
 
 use super::{BoardPosition, ChessCell, PieceColors};
@@ -21,6 +23,8 @@ pub struct Board {
     pub black_king_position: BoardPosition,
 
     pub check_state: Option<CheckedState>,
+    pub en_passant_position: Option<BoardPosition>,
+
     pub cells: Vec<Vec<ChessCell>>,
 }
 
@@ -32,6 +36,7 @@ impl Board {
         white_king_position: BoardPosition,
         black_king_position: BoardPosition,
         check_state: Option<CheckedState>,
+        en_passant_position: Option<BoardPosition>,
     ) -> Self {
         Board {
             cells,
@@ -40,6 +45,7 @@ impl Board {
             check_state,
             white_king_position,
             black_king_position,
+            en_passant_position,
         }
     }
 
@@ -85,7 +91,11 @@ impl Board {
     /// Moves a piece in the board itself. This method expects everything passed to it to be
     /// correct, so it doesn't checks for collisions nor movement patterns.
     pub(crate) fn move_piece(self, mut piece: ChessPiece, destination: &BoardPosition) -> Board {
+        let is_starting_position = is_pawn_on_starting_position(&piece);
+        let (row, column) = piece.position();
+        let position: BoardPosition = (row, column).try_into().unwrap();
         piece.update_position(destination.clone());
+
         let Board {
             mut black_pieces,
             mut white_pieces,
@@ -93,6 +103,7 @@ impl Board {
             mut cells,
             mut white_king_position,
             mut black_king_position,
+            mut en_passant_position,
         } = self;
 
         match (piece.kind(), piece.color()) {
@@ -103,6 +114,7 @@ impl Board {
 
         let (dest_row, dest_column) = destination.into();
         let piece_color = piece.color().clone();
+        let piece_kind = piece.kind().clone();
 
         let cell = cells
             .get_mut(dest_row)
@@ -140,6 +152,65 @@ impl Board {
             None => ChessCell::some(piece),
         };
 
+        if let PieceTypes::Pawn = piece_kind {
+            let destination_is_two_blocks_over = row + 2 == dest_row || column + 2 == dest_column;
+
+            // Pawn did an en passant.
+            if en_passant_position.is_some() {
+                let piece_to_remove_position = match (
+                    is_en_passant_to_the_left(&position, destination),
+                    is_en_passant_to_the_right(&position, destination),
+                ) {
+                    (true, _) => Some(get_en_passant_to_the_left_pos(&position)),
+                    (_, true) => Some(get_en_passant_to_the_right_pos(&position)),
+                    _ => None,
+                };
+
+                if let Some(pos) = piece_to_remove_position {
+                    let (pos_row, pos_column) = pos.into();
+                    let cell = cells.get_mut(pos_row).unwrap().get_mut(pos_column).unwrap();
+                    *cell = match cell.piece() {
+                        Some(eaten_piece) => {
+                            match eaten_piece.color() {
+                                PieceColors::Black => {
+                                    let pos =
+                                        black_pieces.iter().position(|p| p == &eaten_piece).expect(
+                                            format!(
+                                                "Theres no black piece that matches {:?}",
+                                                &eaten_piece
+                                            )
+                                            .as_str(),
+                                        );
+                                    black_pieces.remove(pos);
+                                }
+                                PieceColors::White => {
+                                    let pos =
+                                        white_pieces.iter().position(|p| p == &eaten_piece).expect(
+                                            format!(
+                                                "Theres no white piece that matches {:?}",
+                                                &eaten_piece
+                                            )
+                                            .as_str(),
+                                        );
+
+                                    white_pieces.remove(pos);
+                                }
+                            };
+                            ChessCell::none()
+                        }
+                        None => unreachable!("It should not be possible to en passant here!"),
+                    }
+                }
+            }
+            // Pawn started moving with two spaces.
+            else if is_starting_position && destination_is_two_blocks_over {
+                en_passant_position = Some(destination.clone());
+            }
+        // Any other piece moved or it was not an en passant move by a pawn.
+        } else {
+            en_passant_position = None;
+        }
+
         let mut board = Board::new(
             cells,
             black_pieces,
@@ -147,6 +218,7 @@ impl Board {
             white_king_position,
             black_king_position,
             check_state,
+            en_passant_position,
         );
 
         board.update_check_state(&piece_color);
@@ -200,7 +272,7 @@ impl Board {
                 PieceColors::White => vec![(1, -1), (1, 1)],
             };
 
-            let paths: Vec<BoardPath> = positions_to_check
+            let mut paths: Vec<BoardPath> = positions_to_check
                 .into_iter()
                 .filter_map(|(r, c): (isize, isize)| {
                     self.get_piece(&((row as isize + r, column as isize + c).try_into().ok()?))
@@ -210,6 +282,36 @@ impl Board {
                 .map(|p: BoardPosition| vec![p])
                 .map(BoardPath::from)
                 .collect();
+
+            if let Some(board_position) = &self.en_passant_position {
+                let (other_row, other_column) = board_position.into();
+
+                let same_row = row == other_row;
+                let on_right = column as isize + 1 == other_column as isize;
+                let on_left = column as isize - 1 == other_column as isize;
+
+                let position_to_check = match (same_row, on_right, on_left) {
+                    (true, true, _) => match piece.color() {
+                        PieceColors::Black => Some((-1, 1)),
+                        PieceColors::White => Some((1, 1)),
+                    },
+                    (true, _, true) => match piece.color() {
+                        PieceColors::Black => Some((-1, -1)),
+                        PieceColors::White => Some((1, -1)),
+                    },
+                    _ => None,
+                };
+
+                if let Some((r, c)) = position_to_check {
+                    let board_pos = ((row as isize + r, column as isize + c)).try_into().ok()?;
+                    let cell = self.get_cell(&board_pos);
+
+                    if let None = cell.0 {
+                        let path = BoardPath(vec![board_pos]);
+                        paths.push(path);
+                    }
+                }
+            }
             Some(paths)
         } else {
             None
