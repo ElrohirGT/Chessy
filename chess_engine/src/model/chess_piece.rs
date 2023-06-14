@@ -27,11 +27,16 @@ impl ChessPiece {
 
     /// Retrieves the piece position in the form of a tuple of array indeces.
     pub fn position(&self) -> (usize, usize) {
-        (&self)
+        self
             .position
             .clone()
             .try_into()
             .expect("Coudln't convert the position to (usize, usize)")
+    }
+
+    /// Retrieves the piece position.
+    pub fn board_position(&self) -> &BoardPosition {
+        &self.position
     }
 
     /// Updates the inner position of this piece.
