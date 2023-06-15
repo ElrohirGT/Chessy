@@ -41,7 +41,7 @@ async fn main() -> std::io::Result<()> {
             ])
             .max_age(3600);
         // Allow all origins CORS.
-        let cors = Cors::default();
+        let cors = Cors::default().allow_any_origin();
         App::new()
             .app_data(state.clone())
             .wrap(cors)

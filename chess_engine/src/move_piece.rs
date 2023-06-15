@@ -24,11 +24,8 @@ pub enum MovementError {
     CantCastleBecauseTheRookMoved,
 }
 
-pub fn move_piece(
-    piece: ChessPiece,
-    destination: BoardPosition,
-    board: Board,
-) -> Result<MovementSuccess, MovementError> {
+pub fn move_piece(movement: BoardMovement, board: Board) -> Result<MovementSuccess, MovementError> {
+    let BoardMovement { piece, destination } = movement;
     let piece_color = piece.color().clone();
 
     let piece_in_dest = board.get_piece(&destination);
