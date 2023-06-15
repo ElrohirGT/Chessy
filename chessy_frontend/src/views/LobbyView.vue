@@ -1,13 +1,9 @@
 <template>
   <main>
-    <h1>Lobby View </h1>
+    <h1>Lobby View</h1>
   </main>
 </template>
 
-<script>
+<script></script>
 
-</script>
-
-<style scoped>
-
-</style>
+<style scoped></style>
