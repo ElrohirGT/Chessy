@@ -13,6 +13,14 @@ pub fn get_starting_board() -> Board {
         black_king_position,
         None,
         None,
+        Some(CastlingState {
+            can_use_left_rook: true,
+            can_use_right_rook: true,
+        }),
+        Some(CastlingState {
+            can_use_left_rook: true,
+            can_use_right_rook: true,
+        }),
     )
 }
 

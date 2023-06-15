@@ -20,6 +20,8 @@ pub enum MovementError {
     MovementWouldCauseCheck,
     #[error("The king of this piece is in check!")]
     MovementDoesntRemoveCheck,
+    #[error("The king can't castle because the rook already moved!")]
+    CantCastleBecauseTheRookMoved,
 }
 
 pub fn move_piece(
@@ -77,11 +79,40 @@ fn inner_move_piece(
         .flatten()
         .collect();
 
-    if !movement_positions.contains(&destination) {
+    let castling_state = board.get_castling_state(&piece_color);
+    let mut castle_direction = None;
+    if let (
+        true,
+        Some(CastlingState {
+            can_use_left_rook,
+            can_use_right_rook,
+        }),
+    ) = (is_king, castling_state)
+    {
+        let is_on_starting_positions = is_king_on_starting_position(&piece);
+        if is_on_starting_positions {
+            let wants_to_castle_left =
+                check_castle_left(&piece.position().try_into().unwrap(), &destination);
+            let wants_to_castle_right =
+                check_castle_right(&piece.position().try_into().unwrap(), &destination);
+
+            match (wants_to_castle_left, can_use_left_rook) {
+                (true, true) => castle_direction = Some(ChessBoardDirections::Left),
+                (true, false) => return Err(MovementError::CantCastleBecauseTheRookMoved),
+                _ => {}
+            }
+
+            match (wants_to_castle_right, can_use_right_rook) {
+                (true, true) => castle_direction = Some(ChessBoardDirections::Right),
+                (true, false) => return Err(MovementError::CantCastleBecauseTheRookMoved),
+                _ => {}
+            }
+        }
+    } else if !movement_positions.contains(&destination) {
         return Err(MovementError::DestinationDoesntFollowMovementPattern);
     }
 
-    let board = board.move_piece(piece, &destination);
+    let board = board.move_piece(piece, &destination, castle_direction);
 
     let king_position = if is_king {
         destination

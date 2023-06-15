@@ -24,14 +24,42 @@ pub fn is_pawn_on_starting_position(piece: &ChessPiece) -> bool {
     let (row, _) = piece.position();
 
     if let PieceTypes::Pawn = piece.kind() {
-        if let PieceColors::White = piece.color() {
-            row == white_starting_row.to_index()
-        } else {
-            row == black_starting_row.to_index()
+        match piece.color() {
+            PieceColors::Black => black_starting_row.to_index() == row,
+            PieceColors::White => white_starting_row.to_index() == row,
         }
     } else {
         false
     }
+}
+
+/// Checks if the given chess piece is a king and is on the starting positions of the king color.
+/// The starting position for white kings is e1.
+/// The starting position for black kings is e8.
+pub fn is_king_on_starting_position(piece: &ChessPiece) -> bool {
+    let white_king_pos: BoardPosition = "e1".try_into().unwrap();
+    let black_king_pos: BoardPosition = "e8".try_into().unwrap();
+
+    let position = piece.position().try_into().unwrap();
+
+    if let PieceTypes::King = piece.kind() {
+        match piece.color() {
+            PieceColors::Black => black_king_pos == position,
+            PieceColors::White => white_king_pos == position,
+        }
+    } else {
+        false
+    }
+}
+
+/// Checks if the king at a given position wants to castle to the left
+pub fn check_castle_left(origin: &BoardPosition, destination: &BoardPosition) -> bool {
+    todo!()
+}
+
+/// Checks if the king at a given position wants to castle to the right
+pub fn check_castle_right(origin: &BoardPosition, destination: &BoardPosition) -> bool {
+    todo!()
 }
 
 /// Get's all the possible movements, valid or invalid that a given piece can make.
