@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use actix_web::{web, HttpResponse, Responder, ResponseError, http::header::ContentType};
+use actix_web::{http::header::ContentType, web, HttpResponse, Responder, ResponseError};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -8,7 +8,7 @@ use crate::AppState;
 
 #[derive(Debug)]
 pub enum RegisterErrors {
-    NameIsEmpty
+    NameIsEmpty,
 }
 
 impl Display for RegisterErrors {
@@ -29,10 +29,12 @@ impl ResponseError for RegisterErrors {
             .insert_header(ContentType::plaintext())
             .body(self.to_string())
     }
-
 }
 
-pub async fn register_user(name: String, data: web::Data<AppState>) -> Result<String, RegisterErrors> {
+pub async fn register_user(
+    name: String,
+    data: web::Data<AppState>,
+) -> Result<String, RegisterErrors> {
     log::debug!("Received username `{}`", &name);
 
     if name.is_empty() {
@@ -42,29 +44,12 @@ pub async fn register_user(name: String, data: web::Data<AppState>) -> Result<St
     let id = Uuid::new_v4();
     log::debug!("Generated UUID `{}` for user `{}`", &id, &name);
 
-    let mut users = data.users.lock().await;
-    users.insert(id, name);
+    let mut users = data
+        .users
+        .lock()
+        .expect(r#"Couldn't aquire the lock of users, it may be poisoned!"#);
+    users.insert(id, name.into());
     log::debug!("The current hashmap of users is {:?}", users);
 
     Ok(id.hyphenated().to_string())
-}
-
-#[derive(Serialize)]
-pub struct NewGameResponse {
-    #[serde(alias = "socketUrl")]
-    socket_url: String,
-    #[serde(alias = "gameId")]
-    game_id: String,
-}
-
-pub async fn new_game(userId: String, data: web::Data<AppState>) -> impl Responder {
-    log::debug!("User ({}) want's to create a new game!", &userId);
-
-    let socket_url = String::new();
-    let game_id = String::new();
-
-    HttpResponse::Ok().json(NewGameResponse {
-        socket_url,
-        game_id,
-    })
 }
