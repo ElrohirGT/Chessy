@@ -21,3 +21,6 @@ futures-util = "0.3.28"
 log = "0.4.18"
 serde = { version = "1.0.163", features = ["derive"] }
 uuid = { version = "1.3.3", features = ["v4", "fast-rng", "serde"] }
+chess_engine = { path = "../chess_engine" }
+actix-broker = "0.4.3"
+rand = "0.8.5"

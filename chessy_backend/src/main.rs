@@ -1,22 +1,25 @@
 #[macro_use]
 extern crate log;
 
-use std::collections::HashMap;
 use std::env;
+use std::sync::Mutex;
+use std::{collections::HashMap, sync::Arc};
 
+use actix::Actor;
 use actix_cors::Cors;
 use actix_rt;
 use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use dotenv::dotenv;
 use env_logger;
-use futures_util::lock::Mutex;
 use uuid::Uuid;
 
+mod game;
+mod player;
 mod routes;
 mod websocket;
 
 pub struct AppState {
-    users: Mutex<HashMap<Uuid, String>>,
+    users: Mutex<HashMap<Uuid, Arc<str>>>,
 }
 
 #[actix_rt::main]
@@ -24,9 +27,10 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
-    let state = web::Data::new(AppState {
+    let state = Arc::new(AppState {
         users: Mutex::new(HashMap::new()),
     });
+    let server = websocket::ChessServer::new(Arc::clone(&state)).start();
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -43,7 +47,8 @@ async fn main() -> std::io::Result<()> {
         // Allow all origins CORS.
         let cors = Cors::default().allow_any_origin();
         App::new()
-            .app_data(state.clone())
+            .app_data(web::Data::from(Arc::clone(&state)))
+            .app_data(web::Data::new(server.clone()))
             .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
