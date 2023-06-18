@@ -8,10 +8,11 @@ use uuid::Uuid;
 
 use crate::{
     game::{get_name, Game, GameConfig, ServerGame},
+    websocket::GameEndedReason,
     AppState,
 };
 
-use super::{CreateGame, JoinGame, JoinedGameResponses, LeaveGame, SendMovement};
+use super::{CreateGame, GameMessage, JoinGame, JoinedGameResponses, LeaveGame, SendMovement};
 
 #[derive(Default)]
 pub struct ChessServer {
@@ -26,6 +27,28 @@ impl ChessServer {
             games: HashMap::new(),
             users,
             rng: thread_rng(),
+        }
+    }
+
+    fn end_game_because_player_leaved(
+        &mut self,
+        game_id: &Uuid,
+        client_id: &Uuid,
+        ctx: &mut Context<ChessServer>,
+    ) {
+        if let Some(ServerGame { game, sessions }) = self.games.get_mut(game_id) {
+            *sessions = sessions
+                .drain()
+                .filter(|(id, _)| id != client_id)
+                .map(|(id, client)| {
+                    let res = client.try_send(GameMessage::GameEnded(GameEndedReason::YouWin(super::WinReasons::OpponentDisconnected)));
+                    ((id, client), res)
+                })
+                .filter(|(_, result)| result.is_ok())
+                .map(|(data, _)| data)
+                .collect();
+
+            game.remove_player(client_id);
         }
     }
 }
@@ -91,7 +114,7 @@ impl Handler<JoinGame> for ChessServer {
             client,
         } = msg;
 
-        let ChessServer { games, rng, users } = self;
+        let ChessServer { games, users, .. } = self;
         match games.get_mut(&game_id) {
             Some(game) => {
                 if game.is_full() {
@@ -111,8 +134,15 @@ impl Handler<LeaveGame> for ChessServer {
 
     fn handle(&mut self, msg: LeaveGame, ctx: &mut Self::Context) -> Self::Result {
         let LeaveGame { game_id, client_id } = msg;
-        if let Some(game) = self.games.get_mut(&game_id) {
-            // TODO Remove player from game
+        match self.games.get_mut(&game_id) {
+            Some(ServerGame { game, sessions }) => {
+                sessions.remove(&client_id);
+                log::debug!("Client `{}` left the game `{}`", client_id, game_id);
+                game.remove_player(&client_id);
+
+                self.end_game_because_player_leaved(&game_id, &client_id, ctx);
+            }
+            None => log::debug!("No game found with id `{}`", game_id),
         }
     }
 }

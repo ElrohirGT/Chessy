@@ -113,6 +113,20 @@ impl Game {
         );
         self.players.insert(color, player);
     }
+
+    pub(crate) fn remove_player(&mut self, client_id: &Uuid) {
+        let player_color = self.players.iter_mut().find_map(|(color, player)| {
+            if player.id() == client_id {
+                Some(color.clone())
+            } else {
+                None
+            }
+        });
+
+        if let Some(color) = player_color {
+            self.players.remove(&color);
+        }
+    }
 }
 
 pub(crate) fn get_name(client_id: &Uuid, users: &mut Arc<AppState>) -> Arc<str> {

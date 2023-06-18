@@ -22,6 +22,10 @@ impl Player {
         }
     }
 
+    pub fn id(&self) -> &Uuid {
+        &self.id
+    }
+
     pub fn set_name(&mut self, name: Arc<str>) {
         self.name = name;
     }
