@@ -1,11 +1,13 @@
 use actix::prelude::*;
 use chess_engine::BoardMovement;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{game::Game, player::Player};
 
 type Client = Recipient<GameMessage>;
 
+#[derive(Serialize, Debug)]
 pub enum InvalidMovement {
     GameEnded,
     MovementDoesntRemoveCheck,
@@ -13,6 +15,7 @@ pub enum InvalidMovement {
     MovementDoesntFollowPiecePattern,
 }
 
+#[derive(Serialize, Debug)]
 pub enum WinReasons {
     Checkmate,
     OpponentSurrenders,
@@ -20,17 +23,20 @@ pub enum WinReasons {
     OpponentDisconnected,
 }
 
+#[derive(Serialize, Debug)]
 pub enum LooseReasons {
     Checkmate,
     NoTimeLeft,
     YouSurrendered,
 }
 
+#[derive(Serialize, Debug)]
 pub enum DrawReasons {
     Stalemate,
     Agreement,
 }
 
+#[derive(Serialize, Debug)]
 pub enum GameEndedReason {
     YouWin(WinReasons),
     YouLoose(LooseReasons),
@@ -38,7 +44,7 @@ pub enum GameEndedReason {
 }
 
 /// Server sends this message to sessions
-#[derive(Message)]
+#[derive(Message, Serialize, Debug)]
 #[rtype(result = "()")]
 pub enum GameMessage {
     PlayerJoined(Player),
@@ -55,8 +61,11 @@ pub struct CreateGame {
 
 #[derive(Debug)]
 pub enum JoinedGameResponses {
+    /// The client joined a game.
     JoinedGame,
+    /// The game the client tried to join was full.
     GameFull,
+    /// The game the client tried to join was not found.
     GameNotFound,
 }
 

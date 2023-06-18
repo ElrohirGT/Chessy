@@ -18,6 +18,7 @@ mod player;
 mod routes;
 mod websocket;
 
+#[derive(Default)]
 pub struct AppState {
     users: Mutex<HashMap<Uuid, Arc<str>>>,
 }

@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, sync::Arc};
 
 use actix::prelude::*;
 use actix_broker::BrokerSubscribe;
@@ -10,15 +7,15 @@ use rand::{rngs::ThreadRng, thread_rng, Rng};
 use uuid::Uuid;
 
 use crate::{
-    game::{get_name, Game, GameConfig},
-    player::Player,
+    game::{get_name, Game, GameConfig, ServerGame},
     AppState,
 };
 
-use super::{CreateGame, GameMessage, JoinGame, JoinedGameResponses, LeaveGame, SendMovement};
+use super::{CreateGame, JoinGame, JoinedGameResponses, LeaveGame, SendMovement};
 
+#[derive(Default)]
 pub struct ChessServer {
-    games: HashMap<Uuid, Game>,
+    games: HashMap<Uuid, ServerGame>,
     rng: ThreadRng,
     users: Arc<AppState>,
 }
@@ -67,10 +64,10 @@ impl Handler<CreateGame> for ChessServer {
         let game_config = GameConfig::new(players, 10 * 60 * 1000);
 
         let sessions = HashMap::from([(client_id, client)]);
-        let game = Game::new(game_config, sessions);
+        let game = Game::new(game_config);
         log::debug!("Created game:\n{:?}", game);
 
-        games.insert(game_id.clone(), game);
+        games.insert(game_id.clone(), ServerGame { sessions, game });
 
         MessageResult(game_id)
     }
@@ -127,3 +124,6 @@ impl Handler<SendMovement> for ChessServer {
         todo!()
     }
 }
+
+impl SystemService for ChessServer {}
+impl Supervised for ChessServer {}

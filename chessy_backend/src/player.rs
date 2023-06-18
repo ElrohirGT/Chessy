@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
 use chess_engine::PieceColors;
+use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Player {
     id: Uuid,
     name: Arc<str>,

@@ -2,16 +2,38 @@ use std::{collections::HashMap, sync::Arc};
 
 use actix::Recipient;
 use chess_engine::{get_starting_board, Board, PieceColors};
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::{player::Player, websocket::GameMessage, AppState};
 
 type Client = Recipient<GameMessage>;
 
+/// Represents a chess game in the server
+pub struct ServerGame {
+    pub(crate) game: Game,
+    pub(crate) sessions: HashMap<Uuid, Client>,
+}
+
+impl ServerGame {
+    pub fn is_full(&self) -> bool {
+        self.sessions.len() >= 2
+    }
+
+    pub fn add_opponent(
+        &mut self,
+        client_id: Uuid,
+        client: Recipient<GameMessage>,
+        users: &mut Arc<AppState>,
+    ) {
+        self.sessions.insert(client_id, client);
+        self.game.add_opponent(client_id, users);
+    }
+}
+
 /// Represents a Chess Game.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Game {
-    sessions: HashMap<Uuid, Client>,
     players: HashMap<PieceColors, Player>,
     board: Board,
     initial_ms_per_player: u64,
@@ -55,7 +77,6 @@ impl Game {
             ms_per_player,
             board,
         }: GameConfig,
-        sessions: HashMap<Uuid, Client>,
     ) -> Self {
         let players = players_names
             .into_iter()
@@ -67,21 +88,11 @@ impl Game {
         Game {
             players,
             board,
-            sessions,
             initial_ms_per_player,
         }
     }
 
-    pub fn is_full(&self) -> bool {
-        self.sessions.len() >= 2
-    }
-
-    pub fn add_opponent(
-        &mut self,
-        client_id: Uuid,
-        client: Recipient<GameMessage>,
-        users: &mut Arc<AppState>,
-    ) {
+    pub fn add_opponent(&mut self, client_id: Uuid, users: &mut Arc<AppState>) {
         let (color, _) = self
             .players
             .iter()
@@ -89,19 +100,17 @@ impl Game {
             .expect("No players found in the game to add an opponent!");
         let color = color.opponent();
 
-        self.add_player(client_id, client, users, color);
+        self.add_player(client_id, users, color);
     }
 
-    fn add_player(
-        &mut self,
-        client_id: Uuid,
-        client: Recipient<GameMessage>,
-        users: &mut Arc<AppState>,
-        color: PieceColors,
-    ) {
-        self.sessions.insert(client_id.clone(), client);
+    fn add_player(&mut self, client_id: Uuid, users: &mut Arc<AppState>, color: PieceColors) {
         let name = get_name(&client_id, users);
-        let player = Player::new(client_id.clone(), name, color.clone(), self.initial_ms_per_player);
+        let player = Player::new(
+            client_id.clone(),
+            name,
+            color.clone(),
+            self.initial_ms_per_player,
+        );
         self.players.insert(color, player);
     }
 }
