@@ -45,8 +45,6 @@ pub struct WsChatSession {
 impl WsChatSession {
     pub fn join_game(&mut self, ids: ClientAndGameId, ctx: &mut ws::WebsocketContext<Self>) {
         let ClientAndGameId { game_id, client_id } = ids;
-        let leave_msg = LeaveGame { game_id, client_id };
-        self.issue_system_sync(leave_msg, ctx);
 
         let client = ctx.address().recipient();
         let join_msg = JoinGame {
