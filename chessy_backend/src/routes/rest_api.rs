@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use actix_web::{http::header::ContentType, web, HttpResponse, Responder, ResponseError};
-use serde::Serialize;
+
 use uuid::Uuid;
 
 use crate::AppState;
@@ -45,7 +45,6 @@ pub async fn register_user(
     log::debug!("Generated UUID `{}` for user `{}`", &id, &name);
 
     let mut users = data
-        .users
         .lock()
         .expect(r#"Couldn't aquire the lock of users, it may be poisoned!"#);
     users.insert(id, name.into());

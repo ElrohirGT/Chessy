@@ -4,7 +4,7 @@ use chess_engine::{
 use serde_json;
 
 fn main() {
-    let board = get_starting_board();
+    let mut board = get_starting_board();
 
     let piece = ChessPiece::new(
         PieceTypes::Pawn,
@@ -12,7 +12,7 @@ fn main() {
         PieceColors::White,
     );
     let destination = "e4".try_into().unwrap();
-    let respone = move_piece(BoardMovement { destination, piece }, board);
+    let respone = move_piece(BoardMovement { destination, piece }, &mut board);
 
     println!("{}", serde_json::to_string(&respone.unwrap()).unwrap());
 }

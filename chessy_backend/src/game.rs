@@ -1,11 +1,11 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use actix::Recipient;
 use chess_engine::{get_starting_board, Board, PieceColors};
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::{player::Player, websocket::GameMessage, AppState};
+use crate::{player::Player, websocket::GameMessage};
 
 type Client = Recipient<GameMessage>;
 
@@ -13,6 +13,7 @@ type Client = Recipient<GameMessage>;
 pub struct ServerGame {
     pub(crate) game: Game,
     pub(crate) sessions: HashMap<Uuid, Client>,
+    pub(crate) last_move: Instant,
 }
 
 impl ServerGame {
@@ -23,32 +24,44 @@ impl ServerGame {
     pub fn add_opponent(
         &mut self,
         client_id: Uuid,
+        name: Arc<str>,
         client: Recipient<GameMessage>,
-        users: &mut Arc<AppState>,
-    ) {
+    ) -> Player {
         self.sessions.insert(client_id, client);
-        self.game.add_opponent(client_id, users);
+        self.game.add_opponent(client_id, name)
+    }
+
+    pub fn update_last_move(&mut self) {
+        self.last_move = Instant::now();
+    }
+
+    pub fn new(game: Game, sessions: HashMap<Uuid, Recipient<GameMessage>>) -> Self {
+        ServerGame {
+            game,
+            sessions,
+            last_move: Instant::now(),
+        }
     }
 }
 
 /// Represents a Chess Game.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct Game {
-    players: HashMap<PieceColors, Player>,
-    board: Board,
-    initial_ms_per_player: u64,
+    pub players: HashMap<PieceColors, Player>,
+    pub board: Board,
+    pub initial_ms_per_player: u128,
 }
 
 /// Configuration to start a Chess Game.
 #[derive(Debug)]
 pub struct GameConfig {
     players_names: HashMap<PieceColors, (Uuid, Arc<str>)>,
-    ms_per_player: u64,
+    ms_per_player: u128,
     board: Board,
 }
 
 impl GameConfig {
-    pub fn new(players_names: HashMap<PieceColors, (Uuid, Arc<str>)>, ms_per_player: u64) -> Self {
+    pub fn new(players_names: HashMap<PieceColors, (Uuid, Arc<str>)>, ms_per_player: u128) -> Self {
         let board = get_starting_board();
         GameConfig {
             players_names,
@@ -59,7 +72,7 @@ impl GameConfig {
 
     pub fn new_with_board(
         players_names: HashMap<PieceColors, (Uuid, Arc<str>)>,
-        ms_per_player: u64,
+        ms_per_player: u128,
         board: Board,
     ) -> Self {
         GameConfig {
@@ -92,7 +105,7 @@ impl Game {
         }
     }
 
-    pub fn add_opponent(&mut self, client_id: Uuid, users: &mut Arc<AppState>) {
+    pub fn add_opponent(&mut self, client_id: Uuid, name: Arc<str>) -> Player {
         let (color, _) = self
             .players
             .iter()
@@ -100,18 +113,19 @@ impl Game {
             .expect("No players found in the game to add an opponent!");
         let color = color.opponent();
 
-        self.add_player(client_id, users, color);
+        self.add_player(client_id, name, color)
     }
 
-    fn add_player(&mut self, client_id: Uuid, users: &mut Arc<AppState>, color: PieceColors) {
-        let name = get_name(&client_id, users);
+    fn add_player(&mut self, client_id: Uuid, name: Arc<str>, color: PieceColors) -> Player {
         let player = Player::new(
             client_id.clone(),
             name,
             color.clone(),
             self.initial_ms_per_player,
         );
-        self.players.insert(color, player);
+        self.players.insert(color, player.clone());
+
+        player
     }
 
     pub(crate) fn remove_player(&mut self, client_id: &Uuid) {
@@ -127,17 +141,4 @@ impl Game {
             self.players.remove(&color);
         }
     }
-}
-
-pub(crate) fn get_name(client_id: &Uuid, users: &mut Arc<AppState>) -> Arc<str> {
-    let users = users
-        .users
-        .lock()
-        .expect(r#"Couldn't aquire the lock to users or it has been poisoned!"#);
-
-    let name = users
-        .get(client_id)
-        .expect(format!("No username found with id {}", client_id).as_str());
-
-    Arc::clone(name)
 }

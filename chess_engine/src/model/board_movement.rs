@@ -1,5 +1,5 @@
 use crate::{BoardPosition, ChessPiece};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Groups all the necessary information to move a piece.
 #[derive(Clone, Debug, Serialize, Deserialize)]

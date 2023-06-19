@@ -18,20 +18,14 @@ mod player;
 mod routes;
 mod websocket;
 
-#[derive(Default)]
-pub struct AppState {
-    users: Mutex<HashMap<Uuid, Arc<str>>>,
-}
+type AppState = Mutex<HashMap<Uuid, Arc<str>>>;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
-    let state = Arc::new(AppState {
-        users: Mutex::new(HashMap::new()),
-    });
-    let server = websocket::ChessServer::new(Arc::clone(&state)).start();
+    let state: Arc<AppState> = Arc::default();
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -46,10 +40,9 @@ async fn main() -> std::io::Result<()> {
             ])
             .max_age(3600);
         // Allow all origins CORS.
-        let cors = Cors::default().allow_any_origin();
+        let cors = Cors::default().allow_any_origin().allow_any_header();
         App::new()
-            .app_data(web::Data::from(Arc::clone(&state)))
-            .app_data(web::Data::new(server.clone()))
+            .app_data(web::Data::from(state.clone()))
             .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))

@@ -4,10 +4,10 @@ use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Serialize)]
-pub enum MovementSuccess {
-    NormalMovement(Board),
-    CheckmateMovement(Board),
-    StalemateMovement(Board),
+pub enum MovementSuccess{
+    NormalMovement,
+    CheckmateMovement,
+    StalemateMovement,
 }
 
 #[derive(Debug, Error, Serialize)]
@@ -24,7 +24,10 @@ pub enum MovementError {
     CantCastleBecauseTheRookMoved,
 }
 
-pub fn move_piece(movement: BoardMovement, board: Board) -> Result<MovementSuccess, MovementError> {
+pub fn move_piece(
+    movement: BoardMovement,
+    board: &mut Board,
+) -> Result<MovementSuccess, MovementError> {
     let BoardMovement { piece, destination } = movement;
     let piece_color = piece.color().clone();
 
@@ -64,7 +67,7 @@ fn inner_move_piece(
     is_king: bool,
     piece: ChessPiece,
     destination: BoardPosition,
-    board: Board,
+    board: &mut Board,
 ) -> Result<MovementSuccess, MovementError> {
     let piece_color = piece.color().clone();
     let opponent_piece_color = piece_color.opponent();
@@ -109,7 +112,7 @@ fn inner_move_piece(
         return Err(MovementError::DestinationDoesntFollowMovementPattern);
     }
 
-    let board = board.move_piece(piece, &destination, castle_direction);
+    board.move_piece(piece, &destination, castle_direction);
 
     let king_position = if is_king {
         destination
@@ -120,10 +123,10 @@ fn inner_move_piece(
     if board.position_in_check(&king_position, &piece_color) {
         Err(MovementError::MovementDoesntRemoveCheck)
     } else if board.is_checkmate(&opponent_piece_color) {
-        Ok(MovementSuccess::CheckmateMovement(board))
+        Ok(MovementSuccess::CheckmateMovement)
     } else if board.is_stalemate(&opponent_piece_color) {
-        Ok(MovementSuccess::StalemateMovement(board))
+        Ok(MovementSuccess::StalemateMovement)
     } else {
-        Ok(MovementSuccess::NormalMovement(board))
+        Ok(MovementSuccess::NormalMovement)
     }
 }
