@@ -19,6 +19,7 @@ in
       nodejs
       yarn
       wasm-pack
+	  websocat
     ];
     shellHook = ''
       export RUST_BACKTRACE=1
