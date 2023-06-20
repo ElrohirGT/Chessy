@@ -8,10 +8,6 @@ pub use self::model::*;
 pub use self::move_piece::*;
 pub use self::valid_movements_positions::*;
 
-pub fn create_game(config: GameConfig) -> Game {
-    Game::new(config)
-}
-
 /// Check if the given chess piece is a pawn and is on the starting position of the pawn color.
 /// The starting position for white pawns is the second rank.
 /// The starting position for black pawns is the seventh rank.

@@ -20,7 +20,7 @@ pub struct CastlingState {
     pub can_use_right_rook: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Board {
     pub black_pieces: Vec<ChessPiece>,
     pub white_pieces: Vec<ChessPiece>,
@@ -104,26 +104,26 @@ impl Board {
     /// Moves a piece in the board itself. This method expects everything passed to it to be
     /// correct, so it doesn't checks for collisions nor movement patterns.
     pub(crate) fn move_piece(
-        self,
+        &mut self,
         mut piece: ChessPiece,
         destination: &BoardPosition,
         is_castling: Option<ChessBoardDirections>,
-    ) -> Board {
+    ) {
         let is_starting_position = is_pawn_on_starting_position(&piece);
         let (row, column) = piece.position();
         let position: BoardPosition = (row, column).try_into().unwrap();
         piece.update_position(destination.clone());
 
         let Board {
-            mut black_pieces,
-            mut white_pieces,
-            check_state,
-            mut cells,
-            mut white_king_position,
-            mut black_king_position,
-            mut en_passant_position,
-            mut white_castling,
-            mut black_castling,
+            black_pieces,
+            white_pieces,
+            cells,
+            white_king_position,
+            black_king_position,
+            en_passant_position,
+            white_castling,
+            black_castling,
+            ..
         } = self;
 
         match (piece.kind(), piece.color()) {
@@ -138,7 +138,7 @@ impl Board {
                                     && p.board_position() == &rook_position
                             })
                             .expect("Black left rook should be in black pieces array!");
-                        move_rook_in_position(left_rook, rook_position, &mut cells);
+                        move_rook_in_position(left_rook, rook_position, cells);
                     }
                     Some(ChessBoardDirections::Right) => {
                         let rook_position: BoardPosition = "f8".try_into().unwrap();
@@ -149,12 +149,12 @@ impl Board {
                                     && p.board_position() == &rook_position
                             })
                             .expect("Black right rook should be in black pieces array!");
-                        move_rook_in_position(right_rook, rook_position, &mut cells);
+                        move_rook_in_position(right_rook, rook_position, cells);
                     }
                     _ => unreachable!(),
                 };
-                black_king_position = destination.clone();
-                black_castling = None;
+                *black_king_position = destination.clone();
+                *black_castling = None;
             }
             (PieceTypes::King, PieceColors::White) => {
                 match is_castling {
@@ -167,7 +167,7 @@ impl Board {
                                     && p.board_position() == &rook_position
                             })
                             .expect("White left rook should be in black pieces array!");
-                        move_rook_in_position(left_rook, rook_position, &mut cells);
+                        move_rook_in_position(left_rook, rook_position, cells);
                     }
                     Some(ChessBoardDirections::Right) => {
                         let rook_position: BoardPosition = "f1".try_into().unwrap();
@@ -178,12 +178,12 @@ impl Board {
                                     && p.board_position() == &rook_position
                             })
                             .expect("White right rook should be in black pieces array!");
-                        move_rook_in_position(right_rook, rook_position, &mut cells);
+                        move_rook_in_position(right_rook, rook_position, cells);
                     }
                     _ => unreachable!(),
                 };
-                white_king_position = destination.clone();
-                white_castling = None;
+                *white_king_position = destination.clone();
+                *white_castling = None;
             }
             _ => {}
         }
@@ -280,28 +280,14 @@ impl Board {
             }
             // Pawn started moving with two spaces.
             else if is_starting_position && destination_is_two_blocks_over {
-                en_passant_position = Some(destination.clone());
+                *en_passant_position = Some(destination.clone());
             }
         // Any other piece moved or it was not an en passant move by a pawn.
         } else {
-            en_passant_position = None;
+            *en_passant_position = None;
         }
 
-        let mut board = Board::new(
-            cells,
-            black_pieces,
-            white_pieces,
-            white_king_position,
-            black_king_position,
-            check_state,
-            en_passant_position,
-            white_castling,
-            black_castling,
-        );
-
-        board.update_check_state(&piece_color);
-
-        board
+        self.update_check_state(&piece_color);
     }
 
     /// Get's the king position of the given color.
