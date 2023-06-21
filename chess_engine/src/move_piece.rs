@@ -4,7 +4,7 @@ use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Serialize)]
-pub enum MovementSuccess{
+pub enum MovementSuccess {
     NormalMovement,
     CheckmateMovement,
     StalemateMovement,
@@ -39,25 +39,20 @@ pub fn move_piece(
         false
     };
 
-    let is_king = if let PieceTypes::King = piece.kind() {
-        true
-    } else {
-        false
-    };
-
+    let is_king = matches!(piece.kind(), PieceTypes::King);
     if destination_has_piece && both_same_color {
         return Err(MovementError::DestinationCellOccupied);
     }
 
     if let Some(check_positions) = board.get_check_positions() {
-        return match (is_king, check_positions.contains(&destination)) {
+        match (is_king, check_positions.contains(&destination)) {
             (true, true) => Err(MovementError::MovementWouldCauseCheck),
             (false, false) => Err(MovementError::MovementDoesntRemoveCheck),
             // The destination is a valid piece destination according to the piece type.
             // King: The destination is a position where he's not in check.
             // Any other piece: The destination blocks a check path.
             (is_king, _) => inner_move_piece(is_king, piece, destination, board),
-        };
+        }
     } else {
         inner_move_piece(is_king, piece, destination, board)
     }
@@ -75,8 +70,7 @@ fn inner_move_piece(
     let movement_pattern = board.get_movement_paths(&piece);
     let movement_positions: Vec<BoardPosition> = movement_pattern
         .into_iter()
-        .map(|path| path.0)
-        .flatten()
+        .flat_map(|path| path.0)
         .collect();
 
     let castling_state = board.get_castling_state(&piece_color);

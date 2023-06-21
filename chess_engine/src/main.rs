@@ -1,7 +1,6 @@
 use chess_engine::{
     get_starting_board, move_piece, BoardMovement, ChessPiece, PieceColors, PieceTypes,
 };
-use serde_json;
 
 fn main() {
     let mut board = get_starting_board();

@@ -48,12 +48,18 @@ pub fn is_king_on_starting_position(piece: &ChessPiece) -> bool {
 
 /// Checks if the king at a given position wants to castle to the left
 pub fn check_castle_left(origin: &BoardPosition, destination: &BoardPosition) -> bool {
-    todo!()
+    let (_, org_column) = origin.into();
+    let (_, dest_column) = destination.into();
+
+    dest_column < org_column
 }
 
 /// Checks if the king at a given position wants to castle to the right
 pub fn check_castle_right(origin: &BoardPosition, destination: &BoardPosition) -> bool {
-    todo!()
+    let (_, org_column) = origin.into();
+    let (_, dest_column) = destination.into();
+
+    dest_column > org_column
 }
 
 /// Get's all the possible movements, valid or invalid that a given piece can make.
@@ -170,7 +176,7 @@ fn rook_movement_pattern(row: usize, column: usize) -> Vec<BoardPath> {
                 .collect(),
             _ => unreachable!(),
         })
-        .map(|v: Vec<BoardPosition>| BoardPath(v))
+        .map(BoardPath)
         .collect()
 }
 
@@ -199,22 +205,21 @@ pub fn is_en_passant_to_the_right(origin: &BoardPosition, destination: &BoardPos
         .map(|(r, c)| (row as isize + r, colum as isize + c))
         .filter_map(|s| s.try_into().ok())
         .collect();
-    en_passant_to_the_right_pos.contains(&destination)
+    en_passant_to_the_right_pos.contains(destination)
 }
 
 pub fn get_en_passant_to_the_right_pos(position: &BoardPosition) -> BoardPosition {
     let (row, column) = position.into();
 
-    (row, column + 1).try_into().expect(
-        format!(
+    (row, column + 1).try_into().unwrap_or_else(|_| {
+        panic!(
             "The en passant to the right position is invalid! `({},{})` -> `({},{})`",
             row,
             column,
             row,
             column + 1
         )
-        .as_str(),
-    )
+    })
 }
 
 pub fn is_en_passant_to_the_left(origin: &BoardPosition, destination: &BoardPosition) -> bool {
@@ -226,20 +231,19 @@ pub fn is_en_passant_to_the_left(origin: &BoardPosition, destination: &BoardPosi
         .map(|(r, c)| (row as isize + r, colum as isize + c))
         .filter_map(|s| s.try_into().ok())
         .collect();
-    positions.contains(&destination)
+    positions.contains(destination)
 }
 
 pub fn get_en_passant_to_the_left_pos(position: &BoardPosition) -> BoardPosition {
     let (row, column) = position.into();
 
-    (row, column - 1).try_into().expect(
-        format!(
-            "The en passant to the right position is invalid! `({},{})` -> `({},{})`",
+    (row, column - 1).try_into().unwrap_or_else(|_| {
+        panic!(
+            "The en passant to the left position is invalid! `({},{})` -> `({},{})`",
             row,
             column,
             row,
             column - 1
         )
-        .as_str(),
-    )
+    })
 }

@@ -27,10 +27,10 @@ impl ChessCell {
     }
 
     pub fn piece(&self) -> Option<ChessPiece> {
-        (&self).0.clone()
+        self.0.clone()
     }
 
     pub fn position(&self) -> Option<(usize, usize)> {
-        (&self).0.clone().map(|piece| piece.position())
+        self.0.clone().map(|piece| piece.position())
     }
 }

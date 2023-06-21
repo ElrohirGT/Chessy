@@ -40,6 +40,6 @@ impl ChessPiece {
 
     /// Updates the inner position of this piece.
     pub(crate) fn update_position(&mut self, destination: BoardPosition) {
-        (*self).position = destination;
+        self.position = destination;
     }
 }

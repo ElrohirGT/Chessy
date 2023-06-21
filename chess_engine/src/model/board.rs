@@ -82,16 +82,11 @@ impl Board {
     }
 
     pub fn get_check_positions(&self) -> Option<Vec<BoardPosition>> {
-        match &self.check_state {
-            Some(CheckedState { check_paths, .. }) => Some(
-                check_paths
-                    .iter()
-                    .map(|pos: &BoardPath| pos.clone().0)
-                    .flatten()
-                    .collect(),
-            ),
-            None => None,
-        }
+        self.check_state
+            .as_ref()
+            .map(|CheckedState { check_paths, .. }| {
+                check_paths.iter().flat_map(|pos| pos.clone().0).collect()
+            })
     }
 
     fn get_pieces_from(&self, color: &PieceColors) -> &Vec<ChessPiece> {
@@ -190,7 +185,7 @@ impl Board {
 
         let (dest_row, dest_column) = destination.into();
         let piece_color = piece.color().clone();
-        let piece_kind = piece.kind().clone();
+        let piece_kind = *piece.kind();
 
         let cell = cells
             .get_mut(dest_row)
@@ -204,10 +199,9 @@ impl Board {
                     let index = black_pieces
                         .iter()
                         .position(|p| p == &piece_in_cell)
-                        .expect(
-                            format!("There's no black piece that matches {:?}", &piece_in_cell)
-                                .as_str(),
-                        );
+                        .unwrap_or_else(|| {
+                            panic!("There's no black piece that matches {:?}", &piece_in_cell)
+                        });
                     black_pieces.remove(index);
 
                     ChessCell::some(piece)
@@ -216,10 +210,9 @@ impl Board {
                     let index = white_pieces
                         .iter()
                         .position(|p| p == &piece_in_cell)
-                        .expect(
-                            format!("There's no white piece that matches {:?}", &piece_in_cell)
-                                .as_str(),
-                        );
+                        .unwrap_or_else(|| {
+                            panic!("There's no white piece that matches {:?}", &piece_in_cell)
+                        });
                     white_pieces.remove(index);
 
                     ChessCell::some(piece)
@@ -249,25 +242,27 @@ impl Board {
                         Some(eaten_piece) => {
                             match eaten_piece.color() {
                                 PieceColors::Black => {
-                                    let pos =
-                                        black_pieces.iter().position(|p| p == &eaten_piece).expect(
-                                            format!(
-                                                "Theres no black piece that matches {:?}",
+                                    let pos = black_pieces
+                                        .iter()
+                                        .position(|p| p == &eaten_piece)
+                                        .unwrap_or_else(|| {
+                                            panic!(
+                                                "There's no black piece that matches {:?}",
                                                 &eaten_piece
                                             )
-                                            .as_str(),
-                                        );
+                                        });
                                     black_pieces.remove(pos);
                                 }
                                 PieceColors::White => {
-                                    let pos =
-                                        white_pieces.iter().position(|p| p == &eaten_piece).expect(
-                                            format!(
-                                                "Theres no white piece that matches {:?}",
+                                    let pos = white_pieces
+                                        .iter()
+                                        .position(|p| p == &eaten_piece)
+                                        .unwrap_or_else(|| {
+                                            panic!(
+                                                "There's no white piece that matches {:?}",
                                                 &eaten_piece
                                             )
-                                            .as_str(),
-                                        );
+                                        });
 
                                     white_pieces.remove(pos);
                                 }
@@ -304,10 +299,8 @@ impl Board {
         let opponent_pieces = self.get_pieces_from(&color.opponent());
         opponent_pieces
             .iter()
-            .map(|piece| self.get_movement_paths(piece))
-            .flatten()
-            .map(|path: BoardPath| path.0)
-            .flatten()
+            .flat_map(|piece| self.get_movement_paths(piece))
+            .flat_map(|path| path.0)
             .any(|pos| pos == *position)
     }
 
@@ -367,10 +360,10 @@ impl Board {
                 };
 
                 if let Some((r, c)) = position_to_check {
-                    let board_pos = ((row as isize + r, column as isize + c)).try_into().ok()?;
+                    let board_pos = (row as isize + r, column as isize + c).try_into().ok()?;
                     let cell = self.get_cell(&board_pos);
 
-                    if let None = cell.0 {
+                    if cell.0.is_none() {
                         let path = BoardPath(vec![board_pos]);
                         paths.push(path);
                     }
@@ -439,7 +432,7 @@ impl Board {
         let pieces = self.get_pieces_from(color);
         pieces
             .iter()
-            .map(|p| get_valid_movements_positions(&p, self))
+            .map(|p| get_valid_movements_positions(p, self))
             .any(|mp| !mp.is_empty())
     }
 
@@ -449,7 +442,7 @@ impl Board {
 
         let mut new_check_state = None;
         for color in colors {
-            if let Some(_) = new_check_state {
+            if new_check_state.is_some() {
                 break;
             }
             let king_position = self.get_king_position(color);
@@ -457,8 +450,7 @@ impl Board {
 
             let check_paths: Vec<BoardPath> = opponent_pieces
                 .iter()
-                .map(|p| self.get_movement_paths(p))
-                .flatten()
+                .flat_map(|p| self.get_movement_paths(p))
                 .filter(|movement_path| movement_path.0.contains(&king_position))
                 .collect();
 
@@ -492,22 +484,17 @@ impl Board {
                     if can_king_move {
                         return false;
                     }
-                    if check_paths.len() >= 1 {
+                    if !check_paths.is_empty() {
                         return true;
                     }
 
-                    let check_positions: Vec<BoardPosition> = check_paths
-                        .iter()
-                        .map(|pos| pos.clone().0)
-                        .flatten()
-                        .collect();
+                    let check_positions: Vec<BoardPosition> =
+                        check_paths.iter().flat_map(|pos| pos.clone().0).collect();
 
                     self.get_pieces_from(king_color)
-                        .into_iter()
-                        .map(|p| self.get_movement_paths(p))
-                        .flatten()
-                        .map(|path| path.0)
-                        .flatten()
+                        .iter()
+                        .flat_map(|p| self.get_movement_paths(p))
+                        .flat_map(|path| path.0)
                         .any(|pos| check_positions.contains(&pos))
                 }
             }
@@ -526,11 +513,7 @@ impl Board {
 
 /// Moves the piece that must be a rook, to the specified position.
 /// Makes all the modifications to the cells matrix too.
-fn move_rook_in_position(
-    rook: &mut ChessPiece,
-    to: BoardPosition,
-    cells: &mut Vec<Vec<ChessCell>>,
-) {
+fn move_rook_in_position(rook: &mut ChessPiece, to: BoardPosition, cells: &mut [Vec<ChessCell>]) {
     let (rook_row, rook_column) = rook.position();
     let rook_cell = cells
         .get_mut(rook_row)

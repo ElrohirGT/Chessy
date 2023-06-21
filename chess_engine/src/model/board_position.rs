@@ -33,7 +33,7 @@ impl TryFrom<&str> for BoardPosition {
     type Error = BoardPositionFromStrErrors;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.chars().count() == 2 {
-            let column = ChessFile::try_from(value.chars().nth(0).unwrap())
+            let column = ChessFile::try_from(value.chars().next().unwrap())
                 .map_err(BoardPositionFromStrErrors::InvalidColumnFormat)?;
             let row: usize = value.get(1..=1).unwrap().parse().map_err(|_| {
                 BoardPositionFromStrErrors::RankMustBeANumber(value.get(1..=1).unwrap().to_string())
@@ -103,16 +103,14 @@ impl TryFrom<(usize, usize)> for BoardPosition {
     }
 }
 
-impl Into<(usize, usize)> for BoardPosition {
-    /// Converts the board position into a tuple of array indeces.
-    fn into(self) -> (usize, usize) {
-        (self.row.to_index(), self.column.to_index())
+impl From<BoardPosition> for (usize, usize) {
+    fn from(value: BoardPosition) -> Self {
+        (value.row.to_index(), value.column.to_index())
     }
 }
 
-impl Into<(usize, usize)> for &BoardPosition {
-    /// Converts the board position into a tuple of array indeces.
-    fn into(self) -> (usize, usize) {
-        (self.row.to_index(), self.column.to_index())
+impl From<&BoardPosition> for (usize, usize) {
+    fn from(value: &BoardPosition) -> Self {
+        (value.row.to_index(), value.column.to_index())
     }
 }
