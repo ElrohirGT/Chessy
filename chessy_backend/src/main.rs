@@ -26,6 +26,10 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
     let state: Arc<AppState> = Arc::default();
+    #[cfg(debug_assertions)]
+    let bind_host = "127.0.0.1:8080";
+    #[cfg(not(debug_assertions))]
+    let bind_host = "0.0.0.0";
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -48,7 +52,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .configure(routes::configure_routes)
     })
-    .bind("127.0.0.1:8080")?
+    .bind(bind_host)?
     .run()
     .await
 }
