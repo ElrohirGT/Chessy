@@ -29,8 +29,7 @@ impl ChessPiece {
     pub fn position(&self) -> (usize, usize) {
         self.position
             .clone()
-            .try_into()
-            .expect("Coudln't convert the position to (usize, usize)")
+            .into()
     }
 
     /// Retrieves the piece position.

@@ -70,15 +70,15 @@ impl Board {
         }
     }
 
-    pub fn get_cell(&self, position: &BoardPosition) -> &ChessCell {
+    pub fn get_cell(&self, position: &BoardPosition) -> Option<&ChessCell> {
         let (row, column): (usize, usize) = position.into();
-        self.cells.get(row).unwrap().get(column).unwrap()
+        self.cells.get(row)?.get(column)
     }
 
     /// Tries to get a piece on the given position. There may not be a piece on that position so it
     /// returns an option.
     pub fn get_piece(&self, position: &BoardPosition) -> Option<ChessPiece> {
-        self.get_cell(position).piece()
+        self.get_cell(position)?.piece()
     }
 
     pub fn get_check_positions(&self) -> Option<Vec<BoardPosition>> {
@@ -363,7 +363,7 @@ impl Board {
                     let board_pos = (row as isize + r, column as isize + c).try_into().ok()?;
                     let cell = self.get_cell(&board_pos);
 
-                    if cell.0.is_none() {
+                    if let None | Some(ChessCell(None)) = cell {
                         let path = BoardPath(vec![board_pos]);
                         paths.push(path);
                     }
