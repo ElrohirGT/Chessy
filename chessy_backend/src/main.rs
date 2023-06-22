@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
     #[cfg(debug_assertions)]
     let bind_host = "127.0.0.1:8080";
     #[cfg(not(debug_assertions))]
-    let bind_host = "0.0.0.0";
+    let bind_host = "0.0.0.0:8080";
 
     HttpServer::new(move || {
         let cors = Cors::default()
