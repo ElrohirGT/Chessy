@@ -1,3 +1,16 @@
+@import './colors.css';
+/*===============
+    GLOBAL
+  ===============*/
 * {
-    font-family: 'Cairo', sans-serif;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  color: var(--text);
+  font-family: 'Cairo', sans-serif;
+}
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  background-color: var(--background);
 }
