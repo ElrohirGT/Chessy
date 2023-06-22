@@ -5,12 +5,9 @@ use std::env;
 use std::sync::Mutex;
 use std::{collections::HashMap, sync::Arc};
 
-use actix::Actor;
 use actix_cors::Cors;
-use actix_rt;
 use actix_web::{http, middleware::Logger, web, App, HttpServer};
 use dotenv::dotenv;
-use env_logger;
 use uuid::Uuid;
 
 mod game;

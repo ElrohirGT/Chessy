@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use actix_web::{http::header::ContentType, web, HttpResponse, Responder, ResponseError};
+use actix_web::{http::header::ContentType, web, HttpResponse, ResponseError};
 
 use uuid::Uuid;
 

@@ -117,12 +117,7 @@ impl Game {
     }
 
     fn add_player(&mut self, client_id: Uuid, name: Arc<str>, color: PieceColors) -> Player {
-        let player = Player::new(
-            client_id.clone(),
-            name,
-            color.clone(),
-            self.initial_ms_per_player,
-        );
+        let player = Player::new(client_id, name, color.clone(), self.initial_ms_per_player);
         self.players.insert(color, player.clone());
 
         player

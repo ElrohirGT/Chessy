@@ -1,8 +1,10 @@
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use actix::{fut, prelude::*};
 use actix_broker::BrokerIssue;
-use actix_web::{web, Error, HttpRequest, Responder};
+use actix_web::{
+    http::header::ContentType, web, Error, HttpRequest, HttpResponse, Responder, ResponseError,
+};
 use actix_web_actors::ws;
 use chess_engine::BoardMovement;
 use serde::{Deserialize, Serialize};
@@ -16,24 +18,62 @@ use crate::{
     AppState,
 };
 
+#[derive(Debug)]
+pub enum WSConnectionError {
+    InternalLockError,
+    UserDoesntExists(Uuid),
+    WebError(Error),
+}
+
+impl Display for WSConnectionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WSConnectionError::InternalLockError => {
+                f.write_str("Couldn't aquire the lock for users, it may be poisoned!")
+            }
+            WSConnectionError::UserDoesntExists(id) => f.write_fmt(format_args!(
+                "The user with the given id `{}` doesn't exists!",
+                id
+            )),
+            WSConnectionError::WebError(_) => f.write_str("Internal error with websocket!"),
+        }
+    }
+}
+
+impl ResponseError for WSConnectionError {
+    fn status_code(&self) -> actix_http::StatusCode {
+        match self {
+            WSConnectionError::InternalLockError => actix_http::StatusCode::INTERNAL_SERVER_ERROR,
+            WSConnectionError::UserDoesntExists(_) => actix_http::StatusCode::BAD_REQUEST,
+            WSConnectionError::WebError(_) => actix_http::StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> actix_web::HttpResponse<actix_http::body::BoxBody> {
+        HttpResponse::build(self.status_code())
+            .insert_header(ContentType::plaintext())
+            .body(self.to_string())
+    }
+}
+
 pub async fn ws_endpoint(
     req: HttpRequest,
     stream: web::Payload,
     path: web::Path<Uuid>,
     data: web::Data<AppState>,
-) -> Result<impl Responder, Error> {
+) -> Result<impl Responder, WSConnectionError> {
     let user_id = path.into_inner();
     log::debug!("User id `{}` wants to connect to websocket", user_id);
 
     let users = data
         .lock()
-        .expect(r#"Couldn't aquire lock for users, it may be poisoned!"#);
+        .map_err(|_| WSConnectionError::InternalLockError)?;
     let username = users
         .get(&user_id)
-        .expect("Username with the given id doesn't exists!");
+        .ok_or_else(|| WSConnectionError::UserDoesntExists(user_id))?;
 
     let session = WsChatSession::new(user_id, username.clone());
-    ws::start(session, &req, stream)
+    ws::start(session, &req, stream).map_err(WSConnectionError::WebError)
 }
 
 pub struct WsChatSession {
@@ -164,7 +204,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             ws::Message::Text(text) => {
                 let msg = text.trim();
 
-                log::debug!("Example Message: {}", serde_json::to_string(&WsSessionMessage::CreateGame).unwrap());
+                log::debug!(
+                    "Example Message: {}",
+                    serde_json::to_string(&WsSessionMessage::CreateGame).unwrap()
+                );
 
                 let result: WsSessionMessage =
                     serde_json::from_str(msg).expect("Invalid JSON message");
