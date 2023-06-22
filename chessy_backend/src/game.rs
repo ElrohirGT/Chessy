@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc, time::Instant};
 use actix::Recipient;
 use chess_engine::{get_starting_board, Board, PieceColors};
 use serde::Serialize;
+use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{player::Player, websocket::GameMessage};
@@ -26,9 +27,23 @@ impl ServerGame {
         client_id: Uuid,
         name: Arc<str>,
         client: Recipient<GameMessage>,
+    ) -> Result<Player, AddOpponentErrors> {
+        self.game.add_opponent(client_id, name).and_then(|player| {
+            self.sessions.insert(client_id, client);
+            Ok(player)
+        })
+    }
+
+    /// Adds a player with a random color to the game.
+    pub fn add_player(
+        &mut self,
+        client_id: Uuid,
+        name: Arc<str>,
+        client: Recipient<GameMessage>,
+        color: PieceColors,
     ) -> Player {
         self.sessions.insert(client_id, client);
-        self.game.add_opponent(client_id, name)
+        self.game.add_player(client_id, name, color)
     }
 
     pub fn update_last_move(&mut self) {
@@ -105,15 +120,19 @@ impl Game {
         }
     }
 
-    pub fn add_opponent(&mut self, client_id: Uuid, name: Arc<str>) -> Player {
+    pub fn add_opponent(
+        &mut self,
+        client_id: Uuid,
+        name: Arc<str>,
+    ) -> Result<Player, AddOpponentErrors> {
         let (color, _) = self
             .players
             .iter()
             .next()
-            .expect("No players found in the game to add an opponent!");
+            .ok_or_else(|| AddOpponentErrors::NoPlayer1Found)?;
         let color = color.opponent();
 
-        self.add_player(client_id, name, color)
+        Ok(self.add_player(client_id, name, color))
     }
 
     fn add_player(&mut self, client_id: Uuid, name: Arc<str>, color: PieceColors) -> Player {
@@ -136,4 +155,10 @@ impl Game {
             self.players.remove(&color);
         }
     }
+}
+
+#[derive(Debug, Error)]
+pub enum AddOpponentErrors {
+    #[error("No players found in the game to add an opponent!")]
+    NoPlayer1Found,
 }

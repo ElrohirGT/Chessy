@@ -1,22 +1,15 @@
-use std::fmt::Display;
-
 use actix_web::{http::header::ContentType, web, HttpResponse, ResponseError};
 
 use uuid::Uuid;
 
 use crate::AppState;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum RegisterErrors {
+    #[error("The user name is empty!")]
     NameIsEmpty,
-}
-
-impl Display for RegisterErrors {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            RegisterErrors::NameIsEmpty => f.write_str("The user name is empty!"),
-        }
-    }
+    #[error("Intenal server error: The users lock has been poisoned.")]
+    LockPoisoned,
 }
 
 impl ResponseError for RegisterErrors {
@@ -44,9 +37,7 @@ pub async fn register_user(
     let id = Uuid::new_v4();
     log::debug!("Generated UUID `{}` for user `{}`", &id, &name);
 
-    let mut users = data
-        .lock()
-        .expect(r#"Couldn't aquire the lock of users, it may be poisoned!"#);
+    let mut users = data.lock().map_err(|_| RegisterErrors::LockPoisoned)?;
     users.insert(id, name.into());
     log::debug!("The current hashmap of users is {:?}", users);
 

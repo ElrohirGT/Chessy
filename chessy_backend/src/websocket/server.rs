@@ -3,11 +3,12 @@ use std::{collections::HashMap, sync::Arc, time::Instant};
 use actix::prelude::*;
 use actix_broker::BrokerSubscribe;
 use chess_engine::{BoardMovement, PieceColors};
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{rngs::ThreadRng, Rng};
 use uuid::Uuid;
 
 use crate::{
     game::{Game, GameConfig, ServerGame},
+    player,
     websocket::GameEndedReason,
 };
 
@@ -57,7 +58,7 @@ impl ChessServer {
         game_id: &Uuid,
         movement: chess_engine::BoardMovement,
         instant: Instant,
-        _ctx: &mut Context<ChessServer>,
+        ctx: &mut Context<ChessServer>,
     ) {
         if let Some(ServerGame {
             game,
@@ -67,9 +68,13 @@ impl ChessServer {
         {
             let Game { players, board, .. } = game;
             let BoardMovement { piece, .. } = movement.clone();
-            let player = players
-                .get_mut(piece.color())
-                .expect("No player exists with the given color!");
+            let player = match players.get_mut(piece.color()) {
+                Some(p) => p,
+                None => {
+                    self.end_game_because_player_leaved(game_id, client_id, ctx);
+                    return;
+                }
+            };
             let result = chess_engine::move_piece(movement, board);
 
             match result {
@@ -178,7 +183,13 @@ impl ChessServer {
                 if game.is_full() {
                     JoinedGameResponses::GameFull
                 } else {
-                    let player = game.add_opponent(client_id, name, client);
+                    let player = game
+                        .add_opponent(client_id, name.clone(), client.clone())
+                        .unwrap_or_else(|_| {
+                            let color = get_random_color(&mut self.rng);
+                            game.add_player(client_id, name, client, color)
+                        });
+
                     game.update_last_move();
 
                     game.sessions

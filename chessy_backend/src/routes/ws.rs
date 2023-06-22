@@ -18,26 +18,14 @@ use crate::{
     AppState,
 };
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum WSConnectionError {
+    #[error("Couldn't aquire the lock for users, it may be poisoned!")]
     InternalLockError,
+    #[error("The user with the given id `{0}` doesn't exists!")]
     UserDoesntExists(Uuid),
+    #[error("Internal error with websocket!")]
     WebError(Error),
-}
-
-impl Display for WSConnectionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            WSConnectionError::InternalLockError => {
-                f.write_str("Couldn't aquire the lock for users, it may be poisoned!")
-            }
-            WSConnectionError::UserDoesntExists(id) => f.write_fmt(format_args!(
-                "The user with the given id `{}` doesn't exists!",
-                id
-            )),
-            WSConnectionError::WebError(_) => f.write_str("Internal error with websocket!"),
-        }
-    }
 }
 
 impl ResponseError for WSConnectionError {
@@ -94,6 +82,9 @@ impl WsChatSession {
             name: self.username.clone(),
         };
 
+        // Leave the current game.
+        self.leave_game(ctx);
+
         ChessServer::from_registry()
             .send(join_msg)
             .into_actor(self)
@@ -116,6 +107,10 @@ impl WsChatSession {
             client,
             name: self.username.clone(),
         };
+
+        // Leave the current game if there is one
+        self.leave_game(ctx);
+
         ChessServer::from_registry()
             .send(msg)
             .into_actor(self)
@@ -130,12 +125,16 @@ impl WsChatSession {
             .wait(ctx)
     }
 
+    /// Tries to leave a game if we're connected to one.
     pub fn leave_game(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         let client_id = self.id;
-        let game_id = self.game_id.expect("Couldn't retrieve the game id!");
-        let msg = LeaveGame { game_id, client_id };
-
-        self.issue_system_sync(msg, ctx);
+        match self.game_id {
+            Some(game_id) => {
+                let msg = LeaveGame { game_id, client_id };
+                self.issue_system_sync(msg, ctx);
+            }
+            None => {}
+        }
     }
 
     fn make_movement(
@@ -144,15 +143,18 @@ impl WsChatSession {
         ctx: &mut ws::WebsocketContext<WsChatSession>,
     ) {
         let client_id = self.id;
-        let game_id = self.game_id.expect("Couldn't retrieve the game id!");
+        match self.game_id {
+            Some(game_id) => {
+                let msg = SendMovement {
+                    game_id,
+                    client_id,
+                    movement,
+                };
 
-        let msg = SendMovement {
-            game_id,
-            client_id,
-            movement,
-        };
-
-        self.issue_system_sync(msg, ctx);
+                self.issue_system_sync(msg, ctx);
+            }
+            None => ctx.text(WsSessionErrors::GameConnectionNeeded.to_string()),
+        }
     }
 
     fn new(user_id: Uuid, username: Arc<str>) -> Self {
@@ -204,20 +206,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             ws::Message::Text(text) => {
                 let msg = text.trim();
 
-                log::debug!(
-                    "Example Message: {}",
-                    serde_json::to_string(&WsSessionMessage::CreateGame).unwrap()
-                );
+                match serde_json::from_str(msg) {
+                    Ok(result) => {
+                        log::debug!("Parsed websocket message into: {:?}", result);
 
-                let result: WsSessionMessage =
-                    serde_json::from_str(msg).expect("Invalid JSON message");
-                log::debug!("Parsed websocket message into: {:?}", result);
-
-                match result {
-                    WsSessionMessage::CreateGame => self.create_game(ctx),
-                    WsSessionMessage::JoinGame(ids) => self.join_game(ids, ctx),
-                    WsSessionMessage::LeaveGame => self.leave_game(ctx),
-                    WsSessionMessage::Movement(movement) => self.make_movement(movement, ctx),
+                        match result {
+                            WsSessionMessage::CreateGame => self.create_game(ctx),
+                            WsSessionMessage::JoinGame(ids) => self.join_game(ids, ctx),
+                            WsSessionMessage::LeaveGame => self.leave_game(ctx),
+                            WsSessionMessage::Movement(movement) => {
+                                self.make_movement(movement, ctx)
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        ctx.text(WsSessionErrors::InvalidJSONRequest.to_string());
+                    }
                 }
             }
             ws::Message::Close(reason) => {
@@ -242,4 +246,12 @@ enum WsSessionMessage {
     JoinGame(ClientAndGameId),
     LeaveGame,
     Movement(BoardMovement),
+}
+
+#[derive(Debug, thiserror::Error)]
+enum WsSessionErrors {
+    #[error("ERROR: Invalid JSON format.")]
+    InvalidJSONRequest,
+    #[error("ERROR: Needs to be connected to a game before.")]
+    GameConnectionNeeded,
 }
