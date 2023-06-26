@@ -250,7 +250,6 @@ impl Handler<CreateGame> for ChessServer {
         let sessions = HashMap::from([(client_id, client)]);
         games.insert(game_id.clone(), ServerGame::new(game, sessions));
 
-
         MessageResult(game_id)
     }
 }

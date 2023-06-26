@@ -183,7 +183,6 @@ impl Handler<GameMessage> for WsChatSession {
     type Result = ();
 
     fn handle(&mut self, msg: GameMessage, ctx: &mut Self::Context) {
-        log::debug!("Received a GameMessage:\n{:?}", msg);
         let msg = serde_json::to_string(&msg)
             .expect("The specified game message couldn't be converted to json.");
         ctx.text(msg);
@@ -208,8 +207,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                 match serde_json::from_str(msg) {
                     Ok(result) => {
-                        log::debug!("Parsed websocket message into: {:?}", result);
-
                         match result {
                             WsSessionMessage::CreateGame => self.create_game(ctx),
                             WsSessionMessage::JoinGame(ids) => self.join_game(ids, ctx),
