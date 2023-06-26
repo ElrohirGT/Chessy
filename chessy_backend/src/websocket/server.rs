@@ -242,12 +242,14 @@ impl Handler<CreateGame> for ChessServer {
 
         let players = HashMap::from([(color, (client_id, name))]);
         let game_config = GameConfig::new(players, 10 * 60 * 1000);
+        let game = Game::new(game_config);
+
+        let msg = GameMessage::GameCreated { game_id, game: game.clone() };
+        client.try_send(msg).expect("Coudn't send the created game message to client!");
 
         let sessions = HashMap::from([(client_id, client)]);
-        let game = Game::new(game_config);
-        log::debug!("Created game:\n{:?}", game);
-
         games.insert(game_id.clone(), ServerGame::new(game, sessions));
+
 
         MessageResult(game_id)
     }

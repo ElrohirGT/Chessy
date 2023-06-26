@@ -41,6 +41,7 @@ pub enum GameEndedReason {
 #[derive(Message, Serialize, Debug)]
 #[rtype(result = "()")]
 pub enum GameMessage {
+    GameCreated{game_id: Uuid, game: Game},
     PlayerJoined(Player),
     BoardMovement(Result<Game, MovementError>),
     GameEnded(GameEndedReason),
