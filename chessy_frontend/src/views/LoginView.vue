@@ -7,20 +7,27 @@
         </div>
         <!-- LOGIN FORM -->
         <form-card
-            title="Login"
+            title="Register"
             :fields="this.fields"
+            :errorMessage="this.errorMsg"
             submitButtonText="Start Playing "
             submitButtonIcon="fa-solid fa-arrow-right"
-            @form-submitted="registerUser"
+            @form-submitted="signInUser"
         ></form-card>
     </main>
 </template>
 
 <script>
+import { useVuelidate } from '@vuelidate/core'
+import { required } from '@vuelidate/validators'
+import { useUserSessionStore } from '@/stores/userSession'
+import { REGISTER_URL } from '@/main.js'
 import formCard from '@/components/organisms/formCard.vue'
-import { REGISTER_URL } from '../main.js'
 
 export default {
+    setup() {
+        return { v$: useVuelidate() }
+    },
     components: {
         formCard
     },
@@ -33,25 +40,65 @@ export default {
                     placeholder: 'SuperChessGamer, TheWinner...',
                     currentValue: null
                 }
-            ]
+            ],
+            errorMsg: null
+        }
+    },
+    computed: {
+        username() {
+            return this.fields[0].currentValue
+        }
+    },
+    validations() {
+        return {
+            username: { required }
         }
     },
     methods: {
+        /**
+         * Ask the API to create a user, with this.username,
+         * and returns the id.
+         */
         async registerUser() {
             let options = {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: this.fields[0].currentValue
+                body: this.username
             }
-
-            try { 
-                let user_id = await fetch(REGISTER_URL, options)
-                console.log(user_id.text)
-                // this.$store.value = value
-                // return user_id.text()
+            try {
+                let response = await fetch(REGISTER_URL, options)
+                let user_id = await response.text()
+                console.log(this.username + ': ' + user_id)
+                return user_id
             } catch (error) {
-                console.error("Error: ", error)
+                this.errorMsg = 'An error happen in server, try again...'
+                return null
             }
+        },
+        validateForm() {
+            this.v$.$validate()
+            if (this.v$.$error) {
+                this.errorMsg = this.v$.$errors[0].$message
+            }
+            return this.v$.$error
+        },
+        /** Stores the user data from the form and change page. */
+        async signInUser() {
+            this.errorMsg = null
+            if (this.validateForm()) return
+
+            // Fetching values
+            let user_id = await this.registerUser()
+            if (this.errorMsg != null) return
+
+            // Storing values
+            const { setUserCredentials } = useUserSessionStore()
+            setUserCredentials({
+                name: this.username,
+                id: user_id
+            })
+
+            this.$router.replace({ name: 'lobby' })
         }
     }
 }

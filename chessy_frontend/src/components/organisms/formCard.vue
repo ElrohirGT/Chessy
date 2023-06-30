@@ -14,8 +14,9 @@
                 ></form-field>
             </div>
             <!-- ERROR CARD -->
-            <div class="submitError">
-                {{ h }}
+            <div class="submitError" v-if="errorMessage != null">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>{{ errorMessage }}</span>
             </div>
             <!-- SUBMIT BUTTON -->
             <button-important class="playButton" @click.prevent="submit()">
@@ -70,6 +71,12 @@ export default {
             type: String,
             required: false,
             default: null
+        },
+        /** Message when form validation went wrong */
+        errorMessage: {
+            type: String,
+            required: false,
+            default: null
         }
     },
     emits: ['formSubmitted'],
@@ -121,5 +128,18 @@ form {
     margin-top: 3ch;
     margin-left: auto;
     margin-right: 0;
+}
+.submitError {
+    margin-top: 1ch;
+    background-color: rgb(241, 161, 161);
+    padding: 1ch;
+    border-radius: 0.5rem;
+    outline: 2px solid rgb(180, 73, 73);
+}
+.submitError * {
+    color: rgb(114, 37, 37);
+}
+.submitError i {
+    margin-right: 1ch;
 }
 </style>
