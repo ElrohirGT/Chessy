@@ -1,15 +1,17 @@
 <template>
     <main>
+        <!-- APP LOGO -->
         <div class="app-title">
             <i class="fa-regular fa-chess-knight"></i>
             <h1>Chessy</h1>
         </div>
+        <!-- LOGIN FORM -->
         <form-card
             title="Login"
             :fields="this.fields"
             submitButtonText="Start Playing "
             submitButtonIcon="fa-solid fa-arrow-right"
-            @form-submitted="fetchFieldsData()"
+            @form-submitted="registerUser"
         ></form-card>
     </main>
 </template>
@@ -28,23 +30,13 @@ export default {
                 {
                     id: 'username',
                     inputType: 'text',
-                    placeholder: 'SuperChessGamer, jajaja',
-                    currentValue: null
-                },
-                {
-                    id: 'password',
-                    inputType: 'password',
-                    placeholder: 'Super secret he he he...',
+                    placeholder: 'SuperChessGamer, TheWinner...',
                     currentValue: null
                 }
             ]
         }
     },
     methods: {
-        fetchFieldsData() {
-            console.log('fetching datac')
-            console.log(this.fields)
-        },
         async registerUser() {
             let options = {
                 method: 'POST',
@@ -52,9 +44,14 @@ export default {
                 body: this.fields[0].currentValue
             }
 
-            fetch(REGISTER_URL, options)
-                .then((response) => response.text())
-                .then((text) => console.log(text))
+            try { 
+                let user_id = await fetch(REGISTER_URL, options)
+                console.log(user_id.text)
+                // this.$store.value = value
+                // return user_id.text()
+            } catch (error) {
+                console.error("Error: ", error)
+            }
         }
     }
 }

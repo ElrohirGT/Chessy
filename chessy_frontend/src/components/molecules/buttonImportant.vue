@@ -9,6 +9,10 @@
 </template>
 
 <script>
+/**
+ * A big pushable button.
+ * @onclick methods must be apply by parent component
+ */
 export default {
     setup() {
         return {}

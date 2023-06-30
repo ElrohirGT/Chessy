@@ -2,6 +2,7 @@
     <div class="formCard">
         <h1>{{ title }}</h1>
         <form>
+            <!-- FIELDS  -->
             <div v-for="field in fields" :key="field.id">
                 <div class="fieldName">
                     {{ formatFieldTitle(field.id) }}
@@ -12,6 +13,11 @@
                     v-model="field.currentValue"
                 ></form-field>
             </div>
+            <!-- ERROR CARD -->
+            <div class="submitError">
+                {{ h }}
+            </div>
+            <!-- SUBMIT BUTTON -->
             <button-important class="playButton" @click.prevent="submit()">
                 {{ submitButtonText }}
                 <i :class="submitButtonIcon" v-if="submitButtonIcon != null"></i
@@ -24,35 +30,60 @@
 import formField from '@/components/molecules/formField.vue'
 import buttonImportant from '@/components/molecules/buttonImportant.vue'
 
+/**
+ * A container for formFields components, so it represents a form component.
+ */
 export default {
     components: {
         formField,
         buttonImportant
     },
     props: {
+        /** Form title */
         title: {
             type: String,
             required: true
         },
+        /** Array of fields required in the form 
+         * Example:
+         * fields: [
+                {
+                    id: 'username',
+                    inputType: 'text',
+                    placeholder: 'SuperChessGamer, TheWinner...',
+                    currentValue: null
+                }
+            ]
+        */
         fields: {
             type: Array,
             required: true
         },
+        /** Text to display in submit button */
         submitButtonText: {
             type: String,
             required: false,
             default: 'Submit'
         },
+        /** Font Awesome code to display an icon at the end of button text */
         submitButtonIcon: {
             type: String,
             required: false,
             default: null
         }
     },
+    emits: ['formSubmitted'],
     methods: {
+        /**
+         * Called when user submit its form.
+         */
         submit() {
             this.$emit('formSubmitted')
         },
+        /**
+         * Capitalize the first letter of the string.
+         * @param {String} text
+         */
         formatFieldTitle(text) {
             return text.charAt(0).toUpperCase() + text.slice(1)
         }
