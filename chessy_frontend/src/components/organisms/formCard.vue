@@ -121,7 +121,6 @@ form {
     margin-bottom: 0.5rem;
     margin-top: 2ch;
     font-size: 1.2rem;
-    font-weight: 700;
 }
 .playButton {
     display: block;
