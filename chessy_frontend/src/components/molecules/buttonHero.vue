@@ -91,6 +91,7 @@ const props = defineProps({
 .box * {
     font-family: 'Outfit', sans-serif;
     font-size: var(--font-size);
+    font-weight: bold;
 }
 
 .sparkle {
