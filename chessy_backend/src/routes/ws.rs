@@ -206,16 +206,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 let msg = text.trim();
 
                 match serde_json::from_str(msg) {
-                    Ok(result) => {
-                        match result {
-                            WsSessionMessage::CreateGame => self.create_game(ctx),
-                            WsSessionMessage::JoinGame(ids) => self.join_game(ids, ctx),
-                            WsSessionMessage::LeaveGame => self.leave_game(ctx),
-                            WsSessionMessage::Movement(movement) => {
-                                self.make_movement(movement, ctx)
-                            }
-                        }
-                    }
+                    Ok(result) => match result {
+                        WsSessionMessage::CreateGame => self.create_game(ctx),
+                        WsSessionMessage::JoinGame(ids) => self.join_game(ids, ctx),
+                        WsSessionMessage::LeaveGame => self.leave_game(ctx),
+                        WsSessionMessage::Movement(movement) => self.make_movement(movement, ctx),
+                    },
                     Err(_) => {
                         ctx.text(WsSessionErrors::InvalidJSONRequest.to_string());
                     }

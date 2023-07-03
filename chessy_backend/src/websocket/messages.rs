@@ -41,9 +41,17 @@ pub enum GameEndedReason {
 #[derive(Message, Serialize, Debug)]
 #[rtype(result = "()")]
 pub enum GameMessage {
-    GameCreated{game_id: Uuid, game: Game},
-    PlayerJoined(Player),
+    /// The server responds with this message when the game is created.
+    /// The response is the game UUID.
+    GameCreated(Uuid),
+    /// The server responds with this message when a player joined.
+    /// The response is all the necessary data to display a game.
+    PlayerJoined(Game),
+    ///The server responds with this message when a board movement was played.
+    ///The response is a result, that can either be `Ok or `Err`.
     BoardMovement(Result<Game, MovementError>),
+    /// The server responds with this message when a game has reached a state where it ends.
+    /// The response is the reason it ended.
     GameEnded(GameEndedReason),
 }
 

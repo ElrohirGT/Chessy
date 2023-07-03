@@ -3,12 +3,11 @@ use std::{collections::HashMap, sync::Arc, time::Instant};
 use actix::prelude::*;
 use actix_broker::BrokerSubscribe;
 use chess_engine::{BoardMovement, PieceColors};
-use rand::{rngs::ThreadRng, Rng};
+use rand::{rngs::ThreadRng, Rng, thread_rng};
 use uuid::Uuid;
 
 use crate::{
     game::{Game, GameConfig, ServerGame},
-    player,
     websocket::GameEndedReason,
 };
 
@@ -173,31 +172,26 @@ impl ChessServer {
     fn join_game(
         &mut self,
         client_id: Uuid,
-        name: Arc<str>,
+        client_name: Arc<str>,
         game_id: Uuid,
         client: Recipient<GameMessage>,
         _ctx: &mut Context<ChessServer>,
     ) -> JoinedGameResponses {
+
         match self.games.get_mut(&game_id) {
             Some(game) => {
                 if game.is_full() {
                     JoinedGameResponses::GameFull
                 } else {
-                    let player = game
-                        .add_opponent(client_id, name.clone(), client.clone())
-                        .unwrap_or_else(|_| {
-                            let color = get_random_color(&mut self.rng);
-                            game.add_player(client_id, name, client, color)
-                        });
-
+                    if let Err(_) = game.add_opponent(client_id, client_name.clone(), client.clone()){
+                        let mut rng = thread_rng();
+                        game.add_player(client_id, client_name, client, get_random_color(&mut rng));
+                    }
                     game.update_last_move();
 
-                    game.sessions
-                        .iter_mut()
-                        .filter(|(id, _)| id != &&client_id)
-                        .for_each(|(_, client)| {
-                            let _ = client.try_send(GameMessage::PlayerJoined(player.clone()));
-                        });
+                    game.sessions.iter_mut().for_each(|(_, client)| {
+                        let _ = client.try_send(GameMessage::PlayerJoined(game.game.clone()));
+                    });
 
                     JoinedGameResponses::JoinedGame
                 }
@@ -244,8 +238,10 @@ impl Handler<CreateGame> for ChessServer {
         let game_config = GameConfig::new(players, 10 * 60 * 1000);
         let game = Game::new(game_config);
 
-        let msg = GameMessage::GameCreated { game_id, game: game.clone() };
-        client.try_send(msg).expect("Coudn't send the created game message to client!");
+        let msg = GameMessage::GameCreated(game_id);
+        client
+            .try_send(msg)
+            .expect("Coudn't send the created game message to client!");
 
         let sessions = HashMap::from([(client_id, client)]);
         games.insert(game_id.clone(), ServerGame::new(game, sessions));
