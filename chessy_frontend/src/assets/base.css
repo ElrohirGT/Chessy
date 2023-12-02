@@ -1,4 +1,5 @@
-@import './colors.css';
+@import './color.css';
+@import './typography.css';
 /*===============
     GLOBAL
   ===============*/
@@ -7,15 +8,30 @@
     padding: 0;
     margin: 0;
     color: var(--text);
-    font-family: 'Outfit', sans-serif;
+    font-family: 'personaFontTitle','Outfit', sans-serif;
     font-weight: 500;
 }
 
 body {
     font-family: 'Work Sans', sans-serif;
-    background-color: var(--background);
+    background-color: var(--black);
 }
 
 button {
     border: none;
+    background-color: transparent;
 }
+
+button:focus {
+    border: none;
+    outline: none;
+}
+
+button:focus{
+    outline:none !important;
+}
+
+#app {
+    min-width: 100vw;
+    min-height: 100vh;
+  }

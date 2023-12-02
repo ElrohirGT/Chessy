@@ -1,0 +1,49 @@
+/* ==================
+    FONT DEFINITION
+   ==================
+*/
+
+@font-face {
+    font-family: "personaFont";
+    src: url("Expose-Regular.otf") format('opentype');
+}
+@font-face {
+    font-family: "personaFontTitle";
+    src: url("Persona5MenuFont.ttf") format('truetype');
+}
+
+
+/* ===================
+    FONT STYLES
+   ===================
+*/
+font-large{
+    font-family: "personaFontTitle", Arial, Helvetica, sans-serif;
+    font-size: 5rem;
+}
+
+.font-title{
+    font-family: "personaFontTitle", Arial, Helvetica, sans-serif;
+    font-size: 3rem;
+}
+.font-subtitle{
+    font-family: "personaFont", Arial, Helvetica, sans-serif;
+    font-size: 2rem;
+}
+.font-body{
+    font-family: 'Arsenal', sans-serif;
+    font-size: 1rem;
+}
+.font-button{
+    font-family: "persontaFont";    
+    font-family: 1.5rem;
+}
+
+.font-label {
+    font-family: 'Arsenal', sans-serif;
+    font-size: 0.8rem;
+}
+.font-label-small{
+    font-family: 'Arsenal', sans-serif;
+    font-size: 0.8rem;
+}

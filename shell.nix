@@ -14,7 +14,7 @@ in
       # (nixpkgs.rustChannelOf { rustToolchain = ./rust-toolchain; }).rust
       openssl
       pkg-config
-      exa
+      # exa
       fd
       nodejs
       yarn
