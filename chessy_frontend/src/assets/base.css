@@ -8,7 +8,7 @@
     padding: 0;
     margin: 0;
     color: var(--text);
-    font-family: 'personaFontTitle','Outfit', sans-serif;
+    font-family: 'Arsenal', sans-serif;
     font-weight: 500;
 }
 
@@ -27,11 +27,11 @@ button:focus {
     outline: none;
 }
 
-button:focus{
-    outline:none !important;
+button:focus {
+    outline: none !important;
 }
 
 #app {
     min-width: 100vw;
     min-height: 100vh;
-  }
+}
