@@ -1,13 +1,7 @@
 <template>
-    <div>
-
-    </div>
+    <div class="font-label">hola mundo</div>
 </template>
 
-<script setup>
+<script setup></script>
 
-</script>
-
-<style scoped>
-
-</style>
+<style scoped></style>
