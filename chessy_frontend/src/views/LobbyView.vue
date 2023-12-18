@@ -1,62 +1,67 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { COLOR } from '../components/Color'
 import textBanner from '../components/molecules/textBanner.vue'
 import visualSwitch from '../components/molecules/visualSwitch.vue'
 import SoundPlayer from '../model/SoundPlayer'
 
-const WHITE_COLOR = '#ffffff'
-const BLACK_COLOR = '#000000'
-const GREY_COLOR = '#b8b8b8'
-const RED_COLOR = '#d92323'
-const PINK_COLOR = '#ff1ead'
+const WHITE_COLOR = COLOR.WHITE_COLOR
+const BLACK_COLOR = COLOR.BLACK_COLOR
+const GREY_COLOR = COLOR.GREY_COLOR
+const RED_COLOR = COLOR.RED_COLOR
 
 let isCreateSectionActive = ref(false)
 let isJoinSectionActive = ref(false)
 let isMusicOn = ref(false)
 
-let musicSwitch, createBtn, joinBtn
-let musicSwitchSound, createBtnSound, joinBtnSound
+/** HTML ELEMENTS */
+let musicSwitch = ref(null)
+let createBtn = ref(null)
+let joinBtn = ref(null)
+
+/** SOUND PLAYERS */
+let musicSwitchSound = ref(null)
+let createBtnSound = ref(null)
+let joinBtnSound = ref(null)
 
 onMounted(() => {
     // SETTING SOUND EFFECTS.
-    musicSwitch = document.getElementById('music-switch')
-    musicSwitchSound = new SoundPlayer(musicSwitch)
-    createBtn = document.getElementById('create-btn')
-    createBtnSound = new SoundPlayer(createBtn)
-    joinBtn = document.getElementById('join-btn')
-    joinBtnSound = new SoundPlayer(joinBtn)
+    // Vue components are better fetched by document.getElementById than
+    // using refs
+    musicSwitch.value = document.getElementById('music-switch')
+    musicSwitchSound.value = new SoundPlayer(musicSwitch.value)
+    createBtnSound.value = new SoundPlayer(createBtn.value)
+    joinBtnSound.value = new SoundPlayer(joinBtn.value)
 
-    musicSwitchSound.registerSoundOnEvent('click', './sounds/selection2.mp3')
-    musicSwitchSound.registerSoundOnEvent('dblclick', './sounds/selection2.mp3')
-    musicSwitchSound.registerSoundOnEvent('playBackgroundMusic', './sounds/lobby-music.mp3')
-    createBtnSound.registerSoundOnEvent('click', './sounds/selection4.mp3')
-    joinBtnSound.registerSoundOnEvent('click', './sounds/selection4.mp3')
-    createBtnSound.registerSoundOnEvent('mouseenter', './sounds/selection.mp3')
-    joinBtnSound.registerSoundOnEvent('mouseenter', './sounds/selection.mp3')
-    createBtnSound.registerSoundOnEvent('mouseleave', './sounds/selection3.mp3')
-    joinBtnSound.registerSoundOnEvent('mouseleave', './sounds/selection3.mp3')
+    musicSwitchSound.value.registerSoundOnEvent('playBackgroundMusic', '/sounds/lobby-music.mp3')
+
+    createBtnSound.value.registerSoundOnEvent('click', '/sounds/selection4.mp3')
+    createBtnSound.value.registerSoundOnEvent('mouseenter', '/sounds/selection.mp3')
+    createBtnSound.value.registerSoundOnEvent('mouseleave', '/sounds/selection3.mp3')
+
+    joinBtnSound.value.registerSoundOnEvent('click', '/sounds/selection4.mp3')
+    joinBtnSound.value.registerSoundOnEvent('mouseenter', '/sounds/selection.mp3')
+    joinBtnSound.value.registerSoundOnEvent('mouseleave', '/sounds/selection3.mp3')
 })
 
 function tooggleMusic(eventValue) {
     if (eventValue) {
         isMusicOn.value = true
-        musicSwitchSound.playSound('playBackgroundMusic', true)
+        musicSwitchSound.value.playSound('playBackgroundMusic', true)
     } else {
         isMusicOn.value = false
-        musicSwitchSound.stopSound('playBackgroundMusic')
+        musicSwitchSound.value.stopSound('playBackgroundMusic')
     }
 }
 </script>
 
 <template>
-    <div class="root">
+    <main class="root">
         <textBanner class="username-banner" text="Smaugthur"></textBanner>
         <div class="music-control">
-            <span class="font-button" :style="{ color: isMusicOn ? PINK_COLOR : WHITE_COLOR }"
-                >music</span
-            >
             <visualSwitch
                 id="music-switch"
+                ref="musicSwitch"
                 :initial-value="isMusicOn"
                 on-text="ON"
                 off-text="OFF"
@@ -65,7 +70,7 @@ function tooggleMusic(eventValue) {
         </div>
         <div class="create-block">
             <button
-                id="create-btn"
+                ref="createBtn"
                 class="create-btn"
                 @mouseenter="isCreateSectionActive = true"
                 @mouseleave="isCreateSectionActive = false"
@@ -179,7 +184,7 @@ function tooggleMusic(eventValue) {
         </div>
         <div class="join-block">
             <button
-                id="join-btn"
+                ref="joinBtn"
                 class="join-btn"
                 @mouseenter="isJoinSectionActive = true"
                 @mouseleave="isJoinSectionActive = false"
@@ -266,7 +271,7 @@ function tooggleMusic(eventValue) {
                 />
             </div>
         </div>
-    </div>
+    </main>
 </template>
 
 <style scoped>

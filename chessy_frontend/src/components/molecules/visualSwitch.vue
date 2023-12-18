@@ -1,6 +1,11 @@
 <template>
     <div class="container">
-        <label class="switch">
+        <span
+            class="font-button"
+            :style="{ color: currentValue ? COLOR.PINK_COLOR : COLOR.WHITE_COLOR }"
+            >{{ label }}</span
+        >
+        <label ref="switchButton" class="switch">
             <input type="checkbox" v-model="currentValue" />
             <span class="slider"></span>
         </label>
@@ -9,17 +14,37 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
+import { COLOR } from '../Color'
+import SoundPlayer from '../../model/SoundPlayer'
 
+/* VARIABLES */
 /** The source of true, dictates the real stored value */
 const currentValue = ref(false)
 
+/* HTML ELEMENTS */
+const switchButton = ref(null)
+
+/** SOUND PLAYER */
+let switchSound
+
+/** EVENTS */
 const emit = defineEmits(['switchUpdated'])
 
 onMounted(() => {
     currentValue.value = props.initialValue
+    console.log(switchButton)
+
+    switchSound = new SoundPlayer(switchButton.value)
+    switchSound.registerSoundOnEvent('click', '/sounds/selection2.mp3')
+    switchSound.registerSoundOnEvent('dblclick', '/sounds/selection2.mp3')
 })
 
 const props = defineProps({
+    label: {
+        required: false,
+        type: String,
+        default: 'music'
+    },
     initialValue: {
         required: true,
         type: Boolean,
