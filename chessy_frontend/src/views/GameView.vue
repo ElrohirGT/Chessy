@@ -1,12 +1,12 @@
 <template>
     <main class="root">
         <div class="left-container"></div>
-        <div class="chess-board"></div>
+        <div class="chessboard"></div>
         <div class="right-container"></div>
     </main>
 </template>
 
-<script></script>
+<script setup></script>
 
 <style scoped>
 .root {
@@ -20,9 +20,12 @@
     align-items: center;
 }
 
-.root > * {
-    height: 100px;
-    width: 100px;
-    background-color: red;
+.chessboard {
+    width: 600px;
+    height: 600px;
+    background-color: black;
+    padding: 2ch;
+
+    display: grid;
 }
 </style>
