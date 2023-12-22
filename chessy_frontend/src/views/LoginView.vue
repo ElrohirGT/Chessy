@@ -1,5 +1,12 @@
 <template>
-    <main class="root">
+    <main class="root" @mousemove="parallax">
+        <img
+            class="ghost"
+            v-for="ghost in slidingGhosts"
+            :key="ghost.source"
+            :src="ghost.source"
+            :style="`transform: translateX(${ghost.X_offset}px) translateY(${ghost.Y_offset}px);`"
+        />
         <div class="login-box">
             <div class="back"></div>
             <div class="front"></div>
@@ -12,8 +19,31 @@
 <script setup>
 import { ref } from 'vue'
 import textBanner from '../components/molecules/textBanner.vue'
+import ghost1 from '../assets/Login/ghost1.webp'
+import ghost2 from '../assets/Login/ghost2.webp'
+import ghost3 from '../assets/Login/ghost3.webp'
+import ghost4 from '../assets/Login/ghost4.webp'
 
 const errorMsg = ref('Something went spooky wrong!')
+
+// REPRESENTATION OF SLIDING GHOST
+const slidingGhosts = ref([
+    { source: ghost1, displaceMultiplier: 8, X_offset: 0, Y_offset: 0 },
+    { source: ghost2, displaceMultiplier: 4, X_offset: 0, Y_offset: 0 },
+    { source: ghost4, displaceMultiplier: 2, X_offset: 0, Y_offset: 0 },
+    { source: ghost3, displaceMultiplier: 15, X_offset: 0, Y_offset: 0 }
+])
+
+// GHOST ANIMATION FUNCTION
+function parallax(event) {
+    console.log(event)
+    slidingGhosts.value.forEach(function (ghost) {
+        let moving_value = ghost.displaceMultiplier
+        ghost.X_offset = (event.clientX * moving_value) / 200
+        ghost.Y_offset = (event.clientY * moving_value) / 200
+    })
+    console.log(slidingGhosts)
+}
 </script>
 
 <style scoped>
@@ -27,6 +57,15 @@ const errorMsg = ref('Something went spooky wrong!')
     display: flex;
     align-items: center;
     justify-content: center;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.ghost {
+    position: absolute;
+    height: 100%;
+    top: 0;
 }
 
 .login-box {
@@ -76,7 +115,7 @@ const errorMsg = ref('Something went spooky wrong!')
     transform: skew(-15deg) translateX(-0.2ch);
 }
 
-.warning-msg{
+.warning-msg {
     position: absolute;
     bottom: -40%;
     right: 50%;
