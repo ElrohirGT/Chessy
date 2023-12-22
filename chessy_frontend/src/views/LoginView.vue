@@ -9,7 +9,9 @@
         />
         <div class="login-box">
             <div class="back"></div>
-            <div class="front"></div>
+            <div class="front">
+                <textInput></textInput>
+            </div>
             <textBanner class="warning-msg" v-if="errorMsg" :text="errorMsg"></textBanner>
             <div class="title font-large">Chessy</div>
         </div>
@@ -19,6 +21,7 @@
 <script setup>
 import { ref } from 'vue'
 import textBanner from '../components/molecules/textBanner.vue'
+import textInput from '../components/molecules/textInput.vue'
 import ghost1 from '../assets/Login/ghost1.webp'
 import ghost2 from '../assets/Login/ghost2.webp'
 import ghost3 from '../assets/Login/ghost3.webp'
@@ -36,13 +39,11 @@ const slidingGhosts = ref([
 
 // GHOST ANIMATION FUNCTION
 function parallax(event) {
-    console.log(event)
     slidingGhosts.value.forEach(function (ghost) {
         let moving_value = ghost.displaceMultiplier
         ghost.X_offset = (event.clientX * moving_value) / 200
         ghost.Y_offset = (event.clientY * moving_value) / 200
     })
-    console.log(slidingGhosts)
 }
 </script>
 
@@ -83,6 +84,10 @@ function parallax(event) {
 
 .login-box > .front {
     background-color: var(--white);
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .login-box > .back {
     background-color: var(--red);

@@ -45,5 +45,6 @@
 }
 .font-label-small {
     font-family: 'Arsenal', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
 }
