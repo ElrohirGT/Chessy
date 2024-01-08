@@ -14,8 +14,6 @@ in
       # (nixpkgs.rustChannelOf { rustToolchain = ./rust-toolchain; }).rust
       openssl
       pkg-config
-      # exa
-      fd
       nodejs
       yarn
       wasm-pack
@@ -23,7 +21,5 @@ in
     ];
     shellHook = ''
       export RUST_BACKTRACE=1
-      alias ls=exa
-      alias find=fd
       '';
   }
