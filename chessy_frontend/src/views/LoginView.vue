@@ -11,6 +11,7 @@
             <div class="back"></div>
             <div class="front">
                 <textInput></textInput>
+                <button class="play-btn font-button" @click="handleButton">Lets Play!</button>
             </div>
             <textBanner class="warning-msg" v-if="errorMsg" :text="errorMsg"></textBanner>
             <div class="title font-large">Chessy</div>
@@ -26,6 +27,9 @@ import ghost1 from '../assets/Login/ghost1.webp'
 import ghost2 from '../assets/Login/ghost2.webp'
 import ghost3 from '../assets/Login/ghost3.webp'
 import ghost4 from '../assets/Login/ghost4.webp'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const errorMsg = ref('Something went spooky wrong!')
 
@@ -36,6 +40,11 @@ const slidingGhosts = ref([
     { source: ghost4, displaceMultiplier: 2, X_offset: 0, Y_offset: 0 },
     { source: ghost3, displaceMultiplier: 15, X_offset: 0, Y_offset: 0 }
 ])
+
+// HANDLE LETS PLAY! BUTTON
+function handleButton(event){
+    router.push('/lobby')
+}
 
 // GHOST ANIMATION FUNCTION
 function parallax(event) {
@@ -127,4 +136,31 @@ function parallax(event) {
     width: 70%;
     transform: translateX(50%);
 }
+
+.play-btn {
+    color: black;
+    position: absolute;
+    z-index: 10;
+    bottom: 1ch;
+    right: 1ch;
+    cursor: pointer;
+}
+    
+.play-btn:hover{
+    animation: wiggle  linear 1s normal forwards;
+    animation-fill-mode: forwards;
+}
+
+@keyframes wiggle {
+    0% {
+        transform: rotate(0deg);
+    } 
+    20% {
+        transform: rotate(10deg);
+    }
+    100% {
+        transform: rotate(10deg);
+    }
+}
+
 </style>
