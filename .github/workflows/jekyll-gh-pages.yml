@@ -38,9 +38,9 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v4
       - name: Install dependencies
-        run: nix-shell ../default.nix --run "yarn install"
+        run: nix-shell ../shell.nix --run "yarn install"
       - name: Build
-        run: nix-shell ../default.nix --run "yarn build"
+        run: nix-shell ../shell.nix --run "yarn build"
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
