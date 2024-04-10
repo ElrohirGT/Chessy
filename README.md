@@ -1,6 +1,16 @@
-# Chessy
+<div align = "center">
+  <img src="./media/logo.webp" width="100px"><h1 align="center"> 
+  <h1 align="center" style="font-style:italic;">
+  Chessy</h1>
+    <h5 align="center"> <i style="color:grey;"> 
+   A toy chess app written in rust and Vue.</i> </h5>
+</div>
 
-A toy chess app written in rust and {insert javascript framework here}.
+## Thumbnails
+
+![](./Mockups/Artboard1.png)
+
+![](./Mockups/Artboard4.png)
 
 ## Roadmap
 
