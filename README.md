@@ -6,6 +6,10 @@
    A toy chess app written in rust and Vue.</i> </h5>
 </div>
 
+## Watch it!
+The project is live on:
+[https://elrohirgt.github.io/Chessy/](https://elrohirgt.github.io/Chessy/)
+
 ## Thumbnails
 
 ![](./Mockups/Artboard1.png)
