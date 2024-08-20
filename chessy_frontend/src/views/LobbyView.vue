@@ -33,7 +33,7 @@ onMounted(() => {
     createBtnSound.value = new SoundPlayer(createBtn.value)
     joinBtnSound.value = new SoundPlayer(joinBtn.value)
 
-    musicSwitchSound.value.registerSoundOnEvent('playBackgroundMusic', '/sounds/lobby-music.mp3')
+    musicSwitchSound.value.registerSoundOnEvent('playBackgroundMusic', './sounds/lobby-music.mp3')
 
     createBtnSound.value.registerSoundOnEvent('click', './sounds/selection4.mp3')
     createBtnSound.value.registerSoundOnEvent('mouseenter', './sounds/selection.mp3')
