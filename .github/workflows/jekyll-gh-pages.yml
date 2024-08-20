@@ -27,28 +27,35 @@ concurrency:
 
 jobs:
   # Single deploy job since we're just deploying
-  deploy:
+  build:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v4
-      - uses: DeterminateSystems/magic-nix-cache-action@main # For Nix Cache
-      - name: Install dependencies
-        run: nix-shell ../shell.nix --run "yarn install"
-      - name: Build
-        run: nix-shell ../shell.nix --run "yarn build"
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          # Upload dist repository
+          node-version: 21.7.3
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: build target
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3.0.1
+        with:
           path: './chessy_frontend/dist'
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
