@@ -35,13 +35,13 @@ onMounted(() => {
 
     musicSwitchSound.value.registerSoundOnEvent('playBackgroundMusic', '/sounds/lobby-music.mp3')
 
-    createBtnSound.value.registerSoundOnEvent('click', '/sounds/selection4.mp3')
-    createBtnSound.value.registerSoundOnEvent('mouseenter', '/sounds/selection.mp3')
-    createBtnSound.value.registerSoundOnEvent('mouseleave', '/sounds/selection3.mp3')
+    createBtnSound.value.registerSoundOnEvent('click', './sounds/selection4.mp3')
+    createBtnSound.value.registerSoundOnEvent('mouseenter', './sounds/selection.mp3')
+    createBtnSound.value.registerSoundOnEvent('mouseleave', './sounds/selection3.mp3')
 
-    joinBtnSound.value.registerSoundOnEvent('click', '/sounds/selection4.mp3')
-    joinBtnSound.value.registerSoundOnEvent('mouseenter', '/sounds/selection.mp3')
-    joinBtnSound.value.registerSoundOnEvent('mouseleave', '/sounds/selection3.mp3')
+    joinBtnSound.value.registerSoundOnEvent('click', './sounds/selection4.mp3')
+    joinBtnSound.value.registerSoundOnEvent('mouseenter', './sounds/selection.mp3')
+    joinBtnSound.value.registerSoundOnEvent('mouseleave', './sounds/selection3.mp3')
 })
 
 function tooggleMusic(eventValue) {
