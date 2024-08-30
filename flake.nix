@@ -58,6 +58,7 @@
 
           shellHook = ''
             export RUST_BACKTRACE=1
+            alias nvim="nix run github:ElrohirGT/ConfigurationFiles#vim"
           '';
         };
       };
