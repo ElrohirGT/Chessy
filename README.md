@@ -22,10 +22,10 @@ The project is live on:
 
 ## Compiling the project
 
-All developer dependencies are defined on the shell.nix file. To use this file just install Nix and then proceed with the command:
+All developer dependencies are defined on the flake.nix file. To use this file just install Nix, [enable Flakes](https://nixos.wiki/wiki/Flakes) and then proceed with the command:
 
 ```bash
-nix-shell
+nix develop
 ```
 
 All terminal command blocks assume your on the base directory of this repo and that you are inside the developer session that the command above creates.
