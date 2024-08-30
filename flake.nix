@@ -40,13 +40,20 @@
       function = {pkgs, ...}: {
         default = pkgs.mkShell {
           packages = with pkgs; [
+            # Backend and Engine
             (rust-bin.fromRustupToolchainFile ./rust-toolchain)
             openssl
             pkg-config
-            nodejs
-            yarn
             wasm-pack
             websocat
+
+            # VueJS Frontend
+            nodejs
+            yarn
+
+            # Elm Frontend
+            elmPackages.elm
+            elmPackages.elm-format
           ];
 
           shellHook = ''
